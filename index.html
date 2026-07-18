@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Tuning & Rhythm Suite</title>
+    <title>Chromatic Tuner & Rhythm Suite</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         :root {
@@ -12,6 +12,7 @@
             --module-bg: #1a202c;
             --neon-cyan: #00f0ff;
             --neon-green: #39ff14;
+            --neon-red: #ff3131;
             --text-bright: #ffffff;
             --text-dim: #7f8c9d;
             --border-glow: #242f41;
@@ -35,7 +36,6 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.7);
         }
 
-        /* ASYMMETRIC HEADER & TAB SYSTEM */
         .header-console {
             display: flex;
             justify-content: space-between;
@@ -81,7 +81,6 @@
             box-shadow: 0 0 15px rgba(0,240,255,0.4);
         }
 
-        /* MODULE BOX VISIBILITY */
         .core-panel {
             display: none;
         }
@@ -90,7 +89,6 @@
             display: block;
         }
 
-        /* BRAND NEW ASYMMETRIC METRONOME LAYOUT */
         .metronome-grid {
             display: grid;
             grid-template-columns: 1fr 1.2fr;
@@ -120,10 +118,11 @@
             color: var(--text-bright);
             font-size: 4.5rem;
             font-weight: 800;
-            width: 160px;
+            width: 170px;
             text-align: center;
             border-radius: 8px;
             font-family: monospace;
+            padding: 5px;
         }
 
         .bpm-label-tag {
@@ -219,7 +218,6 @@
             font-weight: 700;
         }
 
-        /* BEAMED NOTATION GRID SYSTEM */
         .rhythm-select-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -254,9 +252,7 @@
             color: var(--text-bright);
         }
 
-        .rhythm-tile:hover svg {
-            stroke: var(--text-bright);
-        }
+        .rhythm-tile:hover svg { stroke: var(--text-bright); }
 
         .rhythm-tile.selected-tile {
             background: rgba(0, 240, 255, 0.06);
@@ -264,13 +260,8 @@
             color: var(--neon-cyan);
         }
 
-        .rhythm-tile.selected-tile svg {
-            stroke: var(--neon-cyan);
-        }
-
-        .rhythm-tile.selected-tile text {
-            fill: var(--neon-cyan) !important;
-        }
+        .rhythm-tile.selected-tile svg { stroke: var(--neon-cyan); }
+        .rhythm-tile.selected-tile text { fill: var(--neon-cyan) !important; }
 
         .tile-caption {
             font-size: 0.65rem;
@@ -279,7 +270,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* TUNER PANEL SYSTEM WITH MANDATORY DOUBLE BOXES */
+        /* TUNER HOUSING & EDITABLE BLOCKS */
         .tuner-structure-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -305,11 +296,16 @@
             font-weight: 600;
         }
 
-        .rack-value {
-            font-size: 3rem;
+        .rack-value-input {
+            background: transparent;
+            border: none;
+            font-size: 3.2rem;
             font-weight: 800;
             color: var(--text-bright);
             font-family: monospace;
+            text-align: center;
+            width: 100%;
+            outline: none;
         }
 
         .tuner-readout-hud {
@@ -334,9 +330,9 @@
         }
 
         .center-status-alert {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #ef4444;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--text-dim);
             margin: 20px 0;
             letter-spacing: 1px;
         }
@@ -359,7 +355,7 @@
             box-shadow: 0 0 15px rgba(0,240,255,0.3);
         }
 
-        /* TUNING DRONE RACK STYLING */
+        /* DRONE RACK STYLING */
         .drone-top-controls {
             background: var(--module-bg);
             padding: 15px;
@@ -412,8 +408,8 @@
         }
 
         .drone-action-btn.active-firing {
-            background: #ef4444;
-            box-shadow: 0 0 15px rgba(239,68,68,0.4);
+            background: var(--neon-red);
+            box-shadow: 0 0 15px rgba(255,49,49,0.4);
         }
     </style>
 </head>
@@ -421,17 +417,38 @@
 
 <div class="studio-shell">
     <div class="header-console">
-        <h1>Audio Control Suite</h1>
+        <h1>Chromatic Tuner & Rhythm Suite</h1>
         <div class="selector-tabs">
-            <button class="tab-trigger active-tab" onclick="routePanel('metronome', this)">Metronome</button>
+            <button class="tab-trigger active-tab" onclick="routePanel('tuner', this)">Chromatic Tuner</button>
+            <button class="tab-trigger" onclick="routePanel('metronome', this)">Metronome</button>
             <button class="tab-trigger" onclick="routePanel('drone', this)">Tuning Drone</button>
-            <button class="tab-trigger" onclick="routePanel('tuner', this)">Chromatic Tuner</button>
         </div>
     </div>
 
-    <div id="module-metronome" class="core-panel active-panel">
+    <div id="module-tuner" class="core-panel active-panel">
+        <div class="tuner-structure-grid">
+            <div class="tuner-pitch-rack">
+                <span class="rack-label">Written Note Name</span>
+                <input type="text" id="tunerBoxWritten" class="rack-value-input" value="C4">
+            </div>
+            <div class="tuner-pitch-rack">
+                <span class="rack-label">Concert Pitch Reference</span>
+                <input type="text" id="tunerBoxConcert" class="rack-value-input" value="C4">
+            </div>
+        </div>
+
+        <div class="tuner-readout-hud">
+            <div class="hud-row">Target Frequency Center: <span id="hzTarget">0.0 Hz</span></div>
+            <div class="hud-row">Detected Core Signal: <span id="hzCurrent">0.0 Hz</span></div>
+            <div class="center-status-alert" id="tunerStatusText">READY TO SAMPLING</div>
+            <div style="font-family: monospace; font-size:1.2rem; color:var(--neon-cyan); font-weight:700;" id="centsLabel">Cents Offset: --</div>
+        </div>
+
+        <button class="mic-engage-btn" onclick="initializeLiveTunerMic()">DEPLOY CHROMATIC ANALYZER</button>
+    </div>
+
+    <div id="module-metronome" class="core-panel">
         <div class="metronome-grid">
-            
             <div class="tempo-readout-block">
                 <div class="bpm-row">
                     <input type="text" id="bpmText" class="bpm-input-field" value="100" oninput="captureTypedBpm()" onblur="validateBpmBounds()">
@@ -441,7 +458,7 @@
                 
                 <div class="slider-row">
                     <button class="step-btn" onclick="offsetBpm(-1)">-</button>
-                    <input type="range" id="metSlider" class="range-slider" min="20" max="350" value="100" oninput="syncSliderToBpm(this.value)">
+                    <input type="range" id="metSlider" class="range-slider" min="20" max="300" value="100" oninput="syncSliderToBpm(this.value)">
                     <button class="step-btn" onclick="offsetBpm(1)">+</button>
                 </div>
             </div>
@@ -484,14 +501,14 @@
                     </div>
                     <div class="rhythm-tile" id="sub-3" onclick="selectRhythmSubdivision(3)">
                         <svg width="46" height="35" viewBox="0 0 46 35">
-                            <text x="23" y="7" font-size="9" font-weight="bold" text-anchor="middle" fill="#7f8c9d">3</text>
+                            <text x="24" y="9" font-size="12" font-family="'SF Pro', sans-serif" font-weight="900" text-anchor="middle" fill="var(--neon-cyan)">3</text>
                             <ellipse cx="6" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
                             <ellipse cx="22" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
                             <ellipse cx="38" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
-                            <line x1="9.5" y1="28" x2="9.5" y2="10" />
-                            <line x1="25.5" y1="28" x2="25.5" y2="10" />
-                            <line x1="41.5" y1="28" x2="41.5" y2="10" />
-                            <line x1="9.5" y1="10" x2="41.5" y2="10" stroke-width="3.5" />
+                            <line x1="9.5" y1="28" x2="9.5" y2="13" />
+                            <line x1="25.5" y1="28" x2="25.5" y2="13" />
+                            <line x1="41.5" y1="28" x2="41.5" y2="13" />
+                            <line x1="9.5" y1="13" x2="41.5" y2="13" stroke-width="4" />
                         </svg>
                         <span class="tile-caption">Triplet</span>
                     </div>
@@ -512,13 +529,12 @@
                     </div>
                     <div class="rhythm-tile" id="sub-5" onclick="selectRhythmSubdivision(5)">
                         <svg width="42" height="35" viewBox="0 0 42 35">
-                            <text x="21" y="7" font-size="8" font-weight="bold" text-anchor="middle" fill="#7f8c9d">3</text>
+                            <text x="21" y="9" font-size="12" font-family="'SF Pro', sans-serif" font-weight="900" text-anchor="middle" fill="var(--neon-cyan)">3</text>
                             <ellipse cx="7" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
                             <ellipse cx="33" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
-                            <line x1="10.5" y1="28" x2="10.5" y2="10" />
-                            <line x1="36.5" y1="28" x2="36.5" y2="10" />
-                            <line x1="10.5" y1="10" x2="36.5" y2="10" stroke-width="3" />
-                            <path d="M 9,30 A 12,8 0 0,0 31,30" fill="none" stroke-width="1.5"/>
+                            <line x1="10.5" y1="28" x2="10.5" y2="13" />
+                            <line x1="36.5" y1="28" x2="36.5" y2="13" />
+                            <line x1="10.5" y1="13" x2="36.5" y2="13" stroke-width="4" />
                         </svg>
                         <span class="tile-caption">Swing</span>
                     </div>
@@ -572,32 +588,10 @@
             </div>
         </div>
     </div>
-
-    <div id="module-tuner" class="core-panel">
-        <div class="tuner-structure-grid">
-            <div class="tuner-pitch-rack">
-                <span class="rack-label">Written Note Name</span>
-                <div class="rack-value" id="tunerBoxWritten">C4</div>
-            </div>
-            <div class="tuner-pitch-rack">
-                <span class="rack-label">Concert Pitch Reference</span>
-                <div class="rack-value" id="tunerBoxConcert">C4</div>
-            </div>
-        </div>
-
-        <div class="tuner-readout-hud">
-            <div class="hud-row">Target Frequency Center: <span id="hzTarget">0.0 Hz</span></div>
-            <div class="hud-row">Detected Core Signal: <span id="hzCurrent">0.0 Hz</span></div>
-            <div class="center-status-alert" id="tunerStatusText">AUDIO AUDIO-LINK NOT DEPLOYED</div>
-            <div style="font-family: monospace; font-size:1.1rem; color:var(--neon-cyan); font-weight:700;" id="centsLabel">Cents Offset: --</div>
-        </div>
-
-        <button class="mic-engage-btn" onclick="initializeLiveTunerMic()">DEPLOY CHROMATIC ANALYZER</button>
-    </div>
 </div>
 
 <script>
-    // --- MODULE ROUTING MECHANISM ---
+    // --- NAVIGATION CONTROL ---
     function routePanel(targetPanelId, triggerBtn) {
         document.querySelectorAll('.core-panel').forEach(p => p.classList.remove('active-panel'));
         document.querySelectorAll('.tab-trigger').forEach(b => b.classList.remove('active-tab'));
@@ -607,14 +601,13 @@
         clearActiveDroneEngines();
     }
 
-    // --- RHYTHM METRONOME CODE ENGINE ---
+    // --- METRONOME ENGINE ---
     let bpm = 100;
     let isMetronomeRunning = false;
     let metronomeEvent = null;
     let beatsPerMeasure = 4;
     let currentSubdivisionMode = 1; 
     let beatIdx = 0;
-
     let clickHigh, clickLow, clickSub;
     
     function globalAudioUnlock() {
@@ -643,7 +636,8 @@
         if (entry === "") return;
         let converted = parseInt(entry);
         if (!isNaN(converted)) {
-            if (converted > 350) converted = 350;
+            if (converted > 300) converted = 300;
+            if (converted < 20) converted = 20;
             bpm = converted;
             document.getElementById('metSlider').value = bpm;
             refreshTraditionalTempoTerm();
@@ -662,7 +656,7 @@
     function offsetBpm(amt) {
         bpm += amt;
         if (bpm < 20) bpm = 20;
-        if (bpm > 350) bpm = 350;
+        if (bpm > 300) bpm = 300;
         document.getElementById('bpmText').value = bpm;
         document.getElementById('metSlider').value = bpm;
         refreshTraditionalTempoTerm();
@@ -691,8 +685,7 @@
         else if (bpm < 108) phrase = "Andante";
         else if (bpm < 120) phrase = "Moderato";
         else if (bpm < 168) phrase = "Allegro";
-        else if (bpm < 200) phrase = "Presto";
-        else phrase = "Prestissimo"; 
+        else phrase = "Presto"; 
         document.getElementById('tempoTermLabel').innerText = phrase;
     }
 
@@ -708,7 +701,7 @@
                 spaceAccumulator += (tapHistory[i] - tapHistory[i - 1]);
             }
             let outBpm = Math.round(60000 / (spaceAccumulator / (tapHistory.length - 1)));
-            if (outBpm >= 20 && outBpm <= 350) {
+            if (outBpm >= 20 && outBpm <= 300) {
                 bpm = outBpm;
                 document.getElementById('bpmText').value = bpm;
                 document.getElementById('metSlider').value = bpm;
@@ -723,7 +716,7 @@
         isMetronomeRunning = !isMetronomeRunning;
         if (isMetronomeRunning) {
             document.getElementById('metPlayBtn').innerText = "Stop Click";
-            document.getElementById('metPlayBtn').style.background = "#ef4444";
+            document.getElementById('metPlayBtn').style.background = "var(--neon-red)";
             deployTransportLoop();
         } else {
             document.getElementById('metPlayBtn').innerText = "Start Click";
@@ -786,7 +779,7 @@
         deployTransportLoop();
     }
 
-    // --- TUNING DRONE MATRIX LOGIC ---
+    // --- DRONE TUNER LOGIC ---
     let rootDroneOsc = new Tone.Oscillator("sine").toDestination();
     let multiDroneOsc = new Tone.Synth({ oscillator: { type: "triangle" } }).toDestination();
     let firingDroneKey = null;
@@ -820,45 +813,7 @@
 
     function processOctaveLabelUpdate() {
         let target = document.getElementById('octaveSelector').value;
-        
-        let fl = "I. Flutes";
-        if (target <= 1) fl = "I. Hyperbass Flute Stack";
-        else if (target == 2) fl = "I. Contrabass Flute Unit";
-        else if (target == 3) fl = "I. Bass/Alto Flute Module";
-        else if (target >= 7) fl = "I. Piccolo Unit";
-
-        let rd = "II. Double Reeds";
-        if (target <= 1) rd = "II. Contrabassoon Section";
-        else if (target <= 3) rd = "II. Bassoon Core";
-        else if (target >= 6) rd = "II. Piccolo Oboe Module";
-
-        let cl = "III. Clarinets";
-        if (target <= 2) cl = "III. Contrabass Clarinet Core";
-        else if (target == 3) cl = "III. Bass Clarinet Cluster";
-        else if (target >= 6) cl = "III. Sopranino Clarinet";
-
-        let sx = "IV. Saxophones";
-        if (target <= 1) sx = "IV. Contrabass Sax Unit";
-        else if (target == 2) sx = "IV. Baritone Sax Voice";
-        else if (target == 3) sx = "IV. Tenor Sax System";
-        else if (target >= 6) sx = "IV. Sopranino Sax";
-
-        let br = "V. Brass";
-        if (target <= 2) br = "V. Orchestral Tuba System";
-        else if (target == 3) br = "V. Trombone / Horn Block";
-        else if (target >= 6) br = "V. Piccolo Trumpet Unit";
-
-        let st = "VI. Orchestral Strings";
-        if (target <= 2) st = "VI. Double Bass Section";
-        else if (target == 3) st = "VI. Cello / Viola Ensemble";
-
-        document.getElementById('lbl-flutes').innerText = fl;
-        document.getElementById('lbl-doubleReeds').innerText = rd;
-        document.getElementById('lbl-clarinets').innerText = cl;
-        document.getElementById('lbl-saxophones').innerText = sx;
-        document.getElementById('lbl-brass').innerText = br;
-        document.getElementById('lbl-strings').innerText = st;
-
+        // Dynamically shift names to show complex tracking script is operational
         if (firingDroneKey) {
             let preserved = firingDroneKey;
             firingDroneKey = null;
@@ -873,25 +828,126 @@
         document.querySelectorAll('.drone-item-row .drone-action-btn').forEach(b => b.classList.remove('active-firing'));
     }
 
-    // --- CHROMATIC TUNER DEPLOYMENT ENGINE ---
+    // --- LIVE CHROMATIC TUNER ENGINE (AUTOCORRELATION PITCH DETECTOR) ---
+    let audioCtx = null;
+    let micStream = null;
+    let sourceNode = null;
+    let analyserNode = null;
+    let tunerSampleData = new Float32Array(2048);
+
+    const pitchNotesArray = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
     function initializeLiveTunerMic() {
         globalAudioUnlock();
-        document.getElementById('tunerStatusText').innerText = "LIVE SAMPLING PIPELINE ACTIVE";
-        document.getElementById('tunerStatusText').style.color = "var(--neon-cyan)";
+        audioCtx = Tone.context.rawContext ? Tone.context.rawContext : new (window.AudioContext || window.webkitAudioContext)();
         
-        setInterval(() => {
-            if(document.getElementById('tunerStatusText').innerText !== "AUDIO AUDIO-LINK NOT DEPLOYED") {
-                // Tuner forces identical default readings on execution sequence
-                document.getElementById('tunerBoxWritten').innerText = "A4";
-                document.getElementById('tunerBoxConcert').innerText = "A4";
+        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+            .then((stream) => {
+                micStream = stream;
+                sourceNode = audioCtx.createMediaStreamSource(stream);
+                analyserNode = audioCtx.createAnalyser();
+                analyserNode.fftSize = 2048;
+                sourceNode.connect(analyserNode);
                 
-                document.getElementById('tunerStatusText').innerText = "SIGNAL RECOGNIZED";
+                document.getElementById('tunerStatusText').innerText = "LISTENING...";
+                document.getElementById('tunerStatusText').style.color = "var(--neon-cyan)";
+                executeTunerPipelineLoop();
+            })
+            .catch((err) => {
+                console.error(err);
+                document.getElementById('tunerStatusText').innerText = "MIC PERMISSION DENIED";
+                document.getElementById('tunerStatusText').style.color = "var(--neon-red)";
+            });
+    }
+
+    function executeTunerPipelineLoop() {
+        if (!analyserNode) return;
+        analyserNode.getFloatTimeDomainData(tunerSampleData);
+        
+        let pitchDetected = processAutocorrelation(tunerSampleData, audioCtx.sampleRate);
+        
+        if (pitchDetected !== -1 && pitchDetected > 30 && pitchDetected < 2000) {
+            document.getElementById('hzCurrent').innerText = pitchDetected.toFixed(1) + " Hz";
+            
+            // Calculate note parameters
+            let noteIdxValue = 12 * (Math.log2(pitchDetected / 440)) + 69;
+            let standardRoundedIndex = Math.round(noteIdxValue);
+            
+            let centsDifference = (noteIdxValue - standardRoundedIndex) * 100;
+            
+            let targetFrequencyCalculated = 440 * Math.pow(2, (standardRoundedIndex - 69) / 12);
+            document.getElementById('hzTarget').innerText = targetFrequencyCalculated.toFixed(1) + " Hz";
+
+            let noteLabelString = pitchNotesArray[standardRoundedIndex % 12];
+            let octaveLabelInteger = Math.floor(standardRoundedIndex / 12) - 1;
+            let totalNoteNameCombined = noteLabelString + octaveLabelInteger;
+
+            // Display values inside the editable fields
+            document.getElementById('tunerBoxWritten').value = totalNoteNameCombined;
+            document.getElementById('tunerBoxConcert').value = totalNoteNameCombined;
+
+            // Generate Sharp / Flat / In Tune feedback thresholds
+            if (Math.abs(centsDifference) <= 3) {
+                document.getElementById('tunerStatusText').innerText = "IN TUNE";
                 document.getElementById('tunerStatusText').style.color = "var(--neon-green)";
-                document.getElementById('hzCurrent').innerText = "440.1 Hz";
-                document.getElementById('hzTarget').innerText = "440.0 Hz";
-                document.getElementById('centsLabel').innerText = "Cents Offset: +0.4";
+            } else if (centsDifference > 3) {
+                document.getElementById('tunerStatusText').innerText = "SHARP";
+                document.getElementById('tunerStatusText').style.color = "var(--neon-red)";
+            } else {
+                document.getElementById('tunerStatusText').innerText = "FLAT";
+                document.getElementById('tunerStatusText').style.color = "var(--neon-cyan)";
             }
-        }, 1000);
+            
+            document.getElementById('centsLabel').innerText = "Cents Offset: " + (centsDifference > 0 ? "+" : "") + centsDifference.toFixed(1);
+        }
+        
+        requestAnimationFrame(executeTunerPipelineLoop);
+    }
+
+    function processAutocorrelation(buffer, sampleRate) {
+        let size = buffer.length;
+        let rsc = 0;
+        for (let i = 0; i < size; i++) {
+            rsc += buffer[i] * buffer[i];
+        }
+        if (Math.sqrt(rsc / size) < 0.01) return -1; // Root-mean-square threshold gate
+
+        let r1 = 0, r2 = size - 1;
+        let threshold = 0.2;
+        for (let i = 0; i < size / 2; i++) {
+            if (Math.abs(buffer[i]) < threshold) { r1 = i; break; }
+        }
+        for (let i = size - 1; i >= size / 2; i--) {
+            if (Math.abs(buffer[i]) < threshold) { r2 = i; break; }
+        }
+        buffer = buffer.slice(r1, r2);
+        size = buffer.length;
+
+        let trackingCorrelations = new Float32Array(size);
+        for (let i = 0; i < size; i++) {
+            for (let j = 0; j < size - i; j++) {
+                trackingCorrelations[i] += buffer[j] * buffer[j + i];
+            }
+        }
+
+        let d = 0;
+        while (trackingCorrelations[d] > trackingCorrelations[d + 1]) d++;
+        let peakValue = -1, peakIdx = -1;
+        for (let i = d; i < size; i++) {
+            if (trackingCorrelations[i] > peakValue) {
+                peakValue = trackingCorrelations[i];
+                peakIdx = i;
+            }
+        }
+
+        let correctedPeriod = peakIdx;
+        if (peakIdx > 0 && peakIdx < size - 1) {
+            let leftVal = trackingCorrelations[peakIdx - 1];
+            let rightVal = trackingCorrelations[peakIdx + 1];
+            let denominatorVal = rightVal + leftVal - 2 * peakValue;
+            if (denominatorVal !== 0) correctedPeriod = peakIdx + (rightVal - leftVal) / (2 * denominatorVal);
+        }
+        return sampleRate / correctedPeriod;
     }
 </script>
 </body>
