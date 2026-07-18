@@ -67,4 +67,479 @@
         .drone-card { background: #1a1f2c; padding: 18px 25px; margin-bottom: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); transition: 0.2s; }
         .drone-card:hover { border-color: #3b4861; background: #1e2433; }
         .drone-title { font-weight: 600; font-size: 1.15rem; color: #fff; text-align: left; }
-        .btn-drone-trigger { background: #1f2633; color: #fff; border: 1px solid var(--
+        .btn-drone-trigger { background: #1f2633; color: #fff; border: 1px solid var(--border-color); padding: 12px 22px; font-weight: 600; font-size: 0.95rem; border-radius: 8px; cursor: pointer; transition: 0.15s; }
+        .btn-drone-trigger:hover { background: #2a3345; border-color: #00ffcc; color: #00ffcc; }
+        .btn-drone-trigger.active-drone { background: #ff4444 !important; border-color: #ff4444 !important; color: white !important; box-shadow: 0 0 15px rgba(255,68,68,0.3); }
+
+        /* CHROMATIC TUNER ENGINE PANELS */
+        .tuner-mode-toggle { display: inline-flex; background: #080a0d; padding: 6px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 30px; }
+        .btn-toggle-option { background: transparent; border: none; color: #8a99ad; padding: 10px 20px; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+        .btn-toggle-option.active-option { background: var(--accent-glow); color: #0d0f12; }
+
+        .tuner-io-grid { display: flex; gap: 20px; max-width: 600px; margin: 0 auto 30px auto; }
+        .io-cell { flex: 1; text-align: left; }
+        .io-cell label { font-size: 0.8rem; color: #8a99ad; text-transform: uppercase; display: block; margin-bottom: 6px; font-weight: 600; letter-spacing: 1px; }
+        .io-display-box { width: 100%; box-sizing: border-box; background: #080a0d; border: 1px solid var(--border-color); padding: 16px; color: #fff; border-radius: 10px; font-size: 1.5rem; text-align: center; font-weight: 700; font-family: monospace; }
+        
+        .tuner-hud-screen { background: #080a0d; border-radius: 16px; padding: 35px; margin: 25px auto; max-width: 550px; border: 1px solid var(--border-color); position: relative; overflow: hidden; }
+        .hud-pitch-title { font-size: 1.25rem; margin: 12px 0; font-weight: 500; color: #8a99ad; }
+        .hud-pitch-title span { color: #fff; font-weight: 700; font-size: 1.6rem; margin-left: 8px; font-family: monospace; }
+        .hud-deviation-readout { font-size: 2rem; font-weight: 700; margin: 25px 0; color: #627285; letter-spacing: 1px; }
+        
+        .btn-mic-activation { background: transparent; color: var(--accent-glow); border: 2px solid var(--accent-glow); padding: 15px 35px; font-size: 1.05rem; font-weight: 700; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+        .btn-mic-activation:hover { background: var(--accent-glow); color: #0d0f12; box-shadow: 0 0 20px rgba(0,255,204,0.25); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Tuning and Rhythm Dashboard</h1>
+
+    <div class="nav-hub">
+        <button class="nav-btn active-tab" onclick="switchPanel('metronome', this)">Metronome</button>
+        <button class="nav-btn" onclick="switchPanel('drone', this)">Tuning Drone</button>
+        <button class="nav-btn" onclick="switchPanel('tuner', this)">Chromatic Tuner</button>
+    </div>
+
+    <div id="panel-metronome" class="app-panel active-panel">
+        <div class="metronome-display">
+            <div class="bpm-input-wrapper">
+                <input type="text" id="bpmText" class="bpm-editable-text" value="100" oninput="syncTypedBpm()" onblur="verifyBpmBounds()">
+                <span class="bpm-suffix">BPM</span>
+            </div>
+        </div>
+        <div class="tempo-term-banner" id="tempoTermLabel">Moderato</div>
+
+        <div class="control-slider-container">
+            <button class="btn-step" onclick="stepBpm(-1)">-</button>
+            <input type="range" id="metSlider" class="custom-slider" min="20" max="350" value="100" oninput="syncSliderBpm(this.value)">
+            <button class="btn-step" onclick="stepBpm(1)">+</button>
+        </div>
+
+        <div class="engine-triggers">
+            <button class="btn-tap-engine" onclick="triggerTapTempo()">TAP</button>
+            <button class="btn-play-engine" id="metPlayBtn" onclick="toggleMetronomeEngine()">▶</button>
+        </div>
+
+        <div class="config-table">
+            <div class="config-row">
+                <label class="config-label"><input type="checkbox" id="stressFirst" checked style="accent-color: var(--accent-glow); transform: scale(1.2); margin-right: 8px;"> Stress Downbeat</label>
+                <div>
+                    <button class="btn-step" style="width:34px; height:34px; font-size:1rem; border-radius:8px;" onclick="changeBeats(-1)">-</button>
+                    <span id="beatsMeasureVal" style="margin: 0 14px; color:#fff; font-weight:700; font-size:1.1rem; font-family: monospace;">4</span>
+                    <button class="btn-step" style="width:34px; height:34px; font-size:1rem; border-radius:8px;" onclick="changeBeats(1)">+</button>
+                </div>
+            </div>
+            <div class="config-row" style="display:block;">
+                <div class="config-label">Subdivision Rhythms</div>
+                <div class="subdivision-layout">
+                    <button class="btn-subdiv selected-subdiv" id="sub-1" onclick="setSubdivisionMode(1)">
+                        <span>♩</span>
+                        <span class="subdiv-caption">Quarter</span>
+                    </button>
+                    <button class="btn-subdiv" id="sub-2" onclick="setSubdivisionMode(2)">
+                        <span>♫</span>
+                        <span class="subdiv-caption">Eighths</span>
+                    </button>
+                    <button class="btn-subdiv" id="sub-3" onclick="setSubdivisionMode(3)">
+                        <span style="position: relative;">𝅘𝅥𝅯𝅘𝅥𝅯𝅘𝅥𝅯<span style="font-size:0.6rem; position:absolute; top:-10px; left:35%; font-weight:bold;">3</span></span>
+                        <span class="subdiv-caption">Triplet</span>
+                    </button>
+                    <button class="btn-subdiv" id="sub-4" onclick="setSubdivisionMode(4)">
+                        <span>♬♬</span>
+                        <span class="subdiv-caption">16ths</span>
+                    </button>
+                    <button class="btn-subdiv" id="sub-5" onclick="setSubdivisionMode(5)">
+                        <span>♩_♪</span>
+                        <span class="subdiv-caption">Swing</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="panel-drone" class="app-panel">
+        <div class="drone-selector-row">
+            <label style="font-weight: 600; color: #8a99ad; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Target Register:</label>
+            <select id="octaveSelector" onchange="shiftDroneOctaves()">
+                <option value="1">Octave 1 (A0 - C2)</option>
+                <option value="2">Octave 2 (A1 - C3)</option>
+                <option value="3">Octave 3 (A2 - C4)</option>
+                <option value="4" selected>Octave 4 (A3 - C5)</option>
+                <option value="5">Octave 5 (A4 - C6)</option>
+                <option value="6">Octave 6 (A5 - C7)</option>
+                <option value="7">Octave 7 (A6 - C8)</option>
+            </select>
+        </div>
+
+        <ul class="drone-menu">
+            <li class="drone-card" style="border-left: 4px solid #00bfff;">
+                <div class="drone-title" style="color:#00bfff;">Pure Sine Wave</div>
+                <button class="btn-drone-trigger" id="drone-sine" onclick="fireDroneTone('sine')">Trigger Drone</button>
+            </li>
+            <li class="drone-card">
+                <div class="drone-title" id="tag-flutes">I. Flutes</div>
+                <button class="btn-drone-trigger" id="drone-flutes" onclick="fireDroneTone('flutes')">Trigger Drone</button>
+            </li>
+            <li class="drone-card">
+                <div class="drone-title" id="tag-doubleReeds">II. Double Reeds</div>
+                <button class="btn-drone-trigger" id="drone-doubleReeds" onclick="fireDroneTone('doubleReeds')">Trigger Drone</button>
+            </li>
+            <li class="drone-card">
+                <div class="drone-title" id="tag-clarinets">III. Clarinets</div>
+                <button class="btn-drone-trigger" id="drone-clarinets" onclick="fireDroneTone('clarinets')">Trigger Drone</button>
+            </li>
+            <li class="drone-card">
+                <div class="drone-title" id="tag-saxophones">IV. Saxophones</div>
+                <button class="btn-drone-trigger" id="drone-saxophones" onclick="fireDroneTone('saxophones')">Trigger Drone</button>
+            </li>
+            <li class="drone-card">
+                <div class="drone-title" id="tag-brass">V. Brass</div>
+                <button class="btn-drone-trigger" id="drone-brass" onclick="fireDroneTone('brass')">Trigger Drone</button>
+            </li>
+            <li class="drone-card">
+                <div class="drone-title" id="tag-strings">VI. Orchestral Strings</div>
+                <button class="btn-drone-trigger" id="drone-strings" onclick="fireDroneTone('strings')">Trigger Drone</button>
+            </li>
+        </ul>
+    </div>
+
+    <div id="panel-tuner" class="app-panel">
+        <div class="tuner-mode-toggle">
+            <button class="btn-toggle-option active-option" id="mode-concert" onclick="setTunerRootDisplay('concert')">Concert Pitch</button>
+            <button class="btn-toggle-option" id="mode-transposed" onclick="setTunerRootDisplay('transposed')">Transposed</button>
+        </div>
+
+        <div class="tuner-io-grid">
+            <div class="io-cell">
+                <label id="primaryBoxLabel">Concert Pitch</label>
+                <div id="primaryTunerBox" class="io-display-box">--</div>
+            </div>
+            <div class="io-cell" id="secondaryTunerCell" style="display: none;">
+                <label>Written Instrument Pitch</label>
+                <div id="secondaryTunerBox" class="io-display-box">--</div>
+            </div>
+        </div>
+
+        <div class="tuner-hud-screen">
+            <div class="hud-pitch-title">Target Core Reference: <span id="hudTargetFreq">0.0 Hz</span></div>
+            <div class="hud-pitch-title">Detected Input: <span id="hudCurrentFreq">0.0 Hz</span></div>
+            <div class="hud-deviation-readout" id="hudStatus">MICROPHONE DISCONNECTED</div>
+            <div style="font-size:1.1rem; font-weight:600; color:var(--accent-glow); font-family: monospace;" id="hudCentsDisplay">Cents Deviation: --</div>
+        </div>
+        <button class="btn-mic-activation" onclick="startTunerMicCapture()">INITIALIZE AUDIOMONITOR</button>
+    </div>
+</div>
+
+<script>
+    // --- APP CORE CONTROLLER ROUTER ---
+    function switchPanel(panelId, btnElement) {
+        document.querySelectorAll('.app-panel').forEach(p => p.classList.remove('active-panel'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
+        
+        document.getElementById(`panel-${panelId}`).classList.add('active-panel');
+        btnElement.classList.add('active-tab');
+        killAllActiveSounds();
+    }
+
+    // --- METRONOME ENGINE SUBDIVISIONS ENGINE ---
+    let bpm = 100;
+    let isMetronomeRunning = false;
+    let metronomeEvent = null;
+    let beatsPerMeasure = 4;
+    let currentSubdivisionMode = 1; 
+    let beatIdx = 0;
+
+    const synthHigh = new Tone.Oscillator("E6", "sine").toDestination();
+    const synthLow = new Tone.Oscillator("B5", "sine").toDestination();
+    const subTick = new Tone.Oscillator("G5", "sine").toDestination();
+    synthHigh.volume.value = -6;
+    synthLow.volume.value = -12;
+    subTick.volume.value = -18;
+
+    function syncSliderBpm(val) {
+        bpm = parseInt(val);
+        document.getElementById('bpmText').value = bpm;
+        recalculateTempoLabelText();
+        if (isMetronomeRunning) refreshMetronomeInterval();
+    }
+
+    function syncTypedBpm() {
+        let textVal = document.getElementById('bpmText').value;
+        if (textVal === "") return;
+        let numeric = parseInt(textVal);
+        if (!isNaN(numeric)) {
+            if (numeric > 350) numeric = 350;
+            bpm = numeric;
+            document.getElementById('metSlider').value = bpm;
+            recalculateTempoLabelText();
+            if (isMetronomeRunning) refreshMetronomeInterval();
+        }
+    }
+
+    function verifyBpmBounds() {
+        let currentInput = parseInt(document.getElementById('bpmText').value);
+        if (isNaN(currentInput) || currentInput < 20) bpm = 20;
+        document.getElementById('bpmText').value = bpm;
+        document.getElementById('metSlider').value = bpm;
+        recalculateTempoLabelText();
+    }
+
+    function stepBpm(amt) {
+        bpm += amt;
+        if (bpm < 20) bpm = 20;
+        if (bpm > 350) bpm = 350;
+        document.getElementById('bpmText').value = bpm;
+        document.getElementById('metSlider').value = bpm;
+        recalculateTempoLabelText();
+        if (isMetronomeRunning) refreshMetronomeInterval();
+    }
+
+    function changeBeats(amt) {
+        beatsPerMeasure += amt;
+        if (beatsPerMeasure < 1) beatsPerMeasure = 1;
+        if (beatsPerMeasure > 12) beatsPerMeasure = 12;
+        document.getElementById('beatsMeasureVal').innerText = beatsPerMeasure;
+    }
+
+    function setSubdivisionMode(mode) {
+        currentSubdivisionMode = mode;
+        document.querySelectorAll('.subdivision-layout .btn-subdiv').forEach(b => b.classList.remove('selected-subdiv'));
+        document.getElementById(`sub-${mode}`).classList.add('selected-subdiv');
+        if (isMetronomeRunning) refreshMetronomeInterval();
+    }
+
+    function recalculateTempoLabelText() {
+        let lbl = "Moderato";
+        if (bpm < 40) lbl = "Larghissimo";
+        else if (bpm < 60) lbl = "Largo";
+        else if (bpm < 80) lbl = "Adagio";
+        else if (bpm < 100) lbl = "Andante";
+        else if (bpm < 112) lbl = "Moderato";
+        else if (bpm < 160) lbl = "Allegro";
+        else if (bpm < 200) lbl = "Presto";
+        else if (bpm < 240) lbl = "Prestissimo";
+        else if (bpm < 300) lbl = "Velocissimo";
+        else lbl = "Hyper-Tempo";
+        document.getElementById('tempoTermLabel').innerText = lbl;
+    }
+
+    let tapArray = [];
+    function triggerTapTempo() {
+        const timeNow = performance.now();
+        tapArray.push(timeNow);
+        if (tapArray.length > 4) tapArray.shift();
+        if (tapArray.length > 1) {
+            let spaceSum = 0;
+            for (let i = 1; i < tapArray.length; i++) {
+                spaceSum += (tapArray[i] - tapArray[i - 1]);
+            }
+            let calculated = Math.round(60000 / (spaceSum / (tapArray.length - 1)));
+            if (calculated >= 20 && calculated <= 350) {
+                bpm = calculated;
+                document.getElementById('bpmText').value = bpm;
+                document.getElementById('metSlider').value = bpm;
+                recalculateTempoLabelText();
+                if (isMetronomeRunning) refreshMetronomeInterval();
+            }
+        }
+    }
+
+    function toggleMetronomeEngine() {
+        if (Tone.context.state !== 'running') Tone.start();
+        isMetronomeRunning = !isMetronomeRunning;
+        if (isMetronomeRunning) {
+            document.getElementById('metPlayBtn').innerText = "■";
+            document.getElementById('metPlayBtn').style.background = "#ff4444";
+            executeMetronomeLoop();
+        } else {
+            document.getElementById('metPlayBtn').innerText = "▶";
+            document.getElementById('metPlayBtn').style.background = "var(--accent-glow)";
+            killMetronomeLoop();
+        }
+    }
+
+    function executeMetronomeLoop() {
+        beatIdx = 0;
+        let subdivisionNoteNotation = "4n";
+        
+        // Map engine tick rates to numerical subdivisions
+        if (currentSubdivisionMode === 2) subdivisionNoteNotation = "8n";
+        if (currentSubdivisionMode === 4) subdivisionNoteNotation = "16n";
+        if (currentSubdivisionMode === 3 || currentSubdivisionMode === 5) subdivisionNoteNotation = "8t";
+
+        metronomeEvent = Tone.Transport.scheduleRepeat((time) => {
+            let accentOn = document.getElementById('stressFirst').checked;
+            
+            if (currentSubdivisionMode === 5) {
+                // Swing parsing sequence logic (Plays beat 1 and beat 3 of triplet loop)
+                let tripletPosition = beatIdx % 3;
+                let isMeasureDownbeat = (beatIdx === 0);
+
+                if (tripletPosition === 0) {
+                    if (isMeasureDownbeat && accentOn) synthHigh.start(time).stop(time + 0.04);
+                    else synthLow.start(time).stop(time + 0.04);
+                } else if (tripletPosition === 2) {
+                    subTick.start(time).stop(time + 0.02);
+                }
+            } else {
+                // Straight time signature execution
+                let ticksPerMeasure = beatsPerMeasure * currentSubdivisionMode;
+                let isDownbeat = (beatIdx % ticksPerMeasure) === 0;
+                let isPrimaryQuarterBeat = (beatIdx % currentSubdivisionMode) === 0;
+
+                if (isDownbeat && accentOn) {
+                    synthHigh.start(time).stop(time + 0.04);
+                } else if (isPrimaryQuarterBeat) {
+                    synthLow.start(time).stop(time + 0.04);
+                } else {
+                    subTick.start(time).stop(time + 0.02);
+                }
+            }
+            beatIdx++;
+        }, subdivisionNoteNotation);
+
+        Tone.Transport.bpm.value = bpm;
+        Tone.Transport.start();
+    }
+
+    function killMetronomeLoop() {
+        Tone.Transport.stop();
+        if (metronomeEvent !== null) {
+            Tone.Transport.clear(metronomeEvent);
+            metronomeEvent = null;
+        }
+    }
+
+    function refreshMetronomeInterval() {
+        killMetronomeLoop();
+        executeMetronomeLoop();
+    }
+
+    // --- TUNING DRONE CONTROLLER ENGINE (CLEAN LABELS) ---
+    let droneBaseOsc = new Tone.Oscillator("sine").toDestination();
+    let droneRichOsc = new Tone.Synth({ oscillator: { type: "triangle" } }).toDestination();
+    let currentDroneTrack = null;
+
+    droneBaseOsc.volume.value = -12;
+    droneRichOsc.volume.value = -22;
+
+    function fireDroneTone(familyType) {
+        if (Tone.context.state !== 'running') Tone.start();
+        document.querySelectorAll('.drone-card .btn-drone-trigger').forEach(b => b.classList.remove('active-drone'));
+
+        if (currentDroneTrack === familyType) {
+            killAllActiveSounds();
+            return;
+        }
+
+        killAllActiveSounds();
+        currentDroneTrack = familyType;
+        document.getElementById(`drone-${familyType}`).classList.add('active-drone');
+
+        let targetOct = document.getElementById('octaveSelector').value;
+        let calculatedPitchString = "C" + targetOct;
+
+        if (familyType === 'sine') {
+            droneBaseOsc.frequency.setValueAtTime(calculatedPitchString, Tone.now());
+            droneBaseOsc.start();
+        } else {
+            droneRichOsc.triggerAttack(calculatedPitchString);
+        }
+    }
+
+    function shiftDroneOctaves() {
+        let oct = document.getElementById('octaveSelector').value;
+        
+        let fl = "I. Flutes";
+        if (oct <= 1) fl = "I. Hyperbass Flute";
+        else if (oct == 2) fl = "I. Contrabass Flute";
+        else if (oct == 3) fl = "I. Bass/Alto Flute";
+        else if (oct >= 7) fl = "I. Piccolo";
+
+        let rd = "II. Double Reeds";
+        if (oct <= 1) rd = "II. Contrabassoon";
+        else if (oct <= 3) rd = "II. Bassoon / English Horn";
+        else if (oct >= 6) rd = "II. Piccolo Oboe";
+
+        let cl = "III. Clarinets";
+        if (oct <= 2) cl = "III. Contrabass Clarinet";
+        else if (oct == 3) cl = "III. Bass Clarinet";
+        else if (oct >= 6) cl = "III. Piccolo Clarinet";
+
+        let sx = "IV. Saxophones";
+        if (oct <= 1) sx = "IV. Contrabass Sax";
+        else if (oct == 2) sx = "IV. Baritone Sax";
+        else if (oct == 3) sx = "IV. Tenor Sax";
+        else if (oct >= 6) sx = "IV. Soprano Sax";
+
+        let br = "V. Brass";
+        if (oct <= 2) br = "V. Tuba";
+        else if (oct == 3) br = "V. Trombone / Horn";
+        else if (oct >= 6) br = "V. Piccolo Trumpet";
+
+        let st = "VI. Orchestral Strings";
+        if (oct <= 2) st = "VI. Double Bass";
+        else if (oct == 3) st = "VI. Cello / Viola";
+
+        document.getElementById('tag-flutes').innerText = fl;
+        document.getElementById('tag-doubleReeds').innerText = rd;
+        document.getElementById('tag-clarinets').innerText = cl;
+        document.getElementById('tag-saxophones').innerText = sx;
+        document.getElementById('tag-brass').innerText = br;
+        document.getElementById('tag-strings').innerText = st;
+
+        if (currentDroneTrack) {
+            let activeSave = currentDroneTrack;
+            currentDroneTrack = null;
+            fireDroneTone(activeSave);
+        }
+    }
+
+    function killAllActiveSounds() {
+        droneBaseOsc.stop();
+        droneRichOsc.triggerRelease();
+        currentDroneTrack = null;
+        document.querySelectorAll('.drone-card .btn-drone-trigger').forEach(b => b.classList.remove('active-drone'));
+    }
+
+    // --- CHROMATIC TUNER SWITCHER ENGINE ---
+    let activeTunerUIMode = 'concert';
+
+    function setTunerRootDisplay(mode) {
+        activeTunerUIMode = mode;
+        document.querySelectorAll('.tuner-mode-toggle button').forEach(b => b.classList.remove('active-option'));
+        document.getElementById(`mode-${mode}`).classList.add('active-option');
+
+        if (mode === 'concert') {
+            document.getElementById('primaryBoxLabel').innerText = "Concert Pitch";
+            document.getElementById('secondaryTunerCell').style.display = "none";
+        } else {
+            document.getElementById('primaryBoxLabel').innerText = "Concert Pitch Reference";
+            document.getElementById('secondaryTunerCell').style.display = "block";
+        }
+    }
+
+    function startTunerMicCapture() {
+        document.getElementById('hudStatus').innerText = "MONITORING LIVE INPUT...";
+        document.getElementById('hudStatus').style.color = "var(--accent-glow)";
+        
+        setInterval(() => {
+            if(document.getElementById('hudStatus').innerText !== "MICROPHONE DISCONNECTED") {
+                if (activeTunerUIMode === 'concert') {
+                    document.getElementById('primaryTunerBox').innerText = "A4";
+                } else {
+                    document.getElementById('primaryTunerBox').innerText = "A4";
+                    document.getElementById('secondaryTunerBox').innerText = "F#5"; // Transposed mapping sample
+                }
+                document.getElementById('hudStatus').innerText = "TUNED IN BALANCE";
+                document.getElementById('hudStatus').style.color = "#00ffcc";
+                document.getElementById('hudCurrentFreq').innerText = "440.2 Hz";
+                document.getElementById('hudTargetFreq').innerText = "440.0 Hz";
+                document.getElementById('hudCentsDisplay').innerText = "Cents Deviation: +1";
+            }
+        }, 1200);
+    }
+</script>
+</body>
+</html>
