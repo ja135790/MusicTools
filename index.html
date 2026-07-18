@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Music Toolkit</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 20px; text-align: center; }
+        .container { max-width: 800px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h1 { color: #00ff88; margin-bottom: 25px; }
+        .section { background: #2a2a2a; padding: 15px; margin-bottom: 20px; border-radius: 8px; border-left: 5px solid #00ff88; text-align: left; }
+        .section h2 { margin-top: 0; color: #fff; }
+        .metronome-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+        input[type="text"] { width: 70px; background: #333; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 4px; text-align: center; font-size: 1.1rem; font-weight: bold; }
+        input[type="range"] { flex-grow: 1; accent-color: #00ff88; }
+        button { background: #00ff88; color: #121212; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #00cc6c; }
+        .score-list { list-style: none; padding: 0; }
+        .score-item { background: #333; padding: 12px; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .instrument-name { font-weight: bold; color: #00ff88; }
+        .current-source { font-size: 0.85rem; color: #aaa; font-style: italic; }
+        .dropdown-container { margin: 15px 0; }
+        select { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Orchestral Tuning & Rhythm Dashboard</h1>
+
+    <div class="section">
+        <h2>1. Precision Metronome</h2>
+        <div class="metronome-controls">
+            <button onclick="adjustBpm(-1)">-</button>
+            <input type="text" id="bpmInput" value="120" oninput="handleBpmTyping()" onblur="validateBpm()">
+            <span>BPM</span>
+            <button onclick="adjustBpm(1)">+</button>
+            <input type="range" id="bpmSlider" min="20" max="350" value="120" oninput="handleBpmSlider(this.value)">
+        </div>
+        <div style="margin-bottom: 10px; font-weight: bold; color: #00ff88;" id="tempoTerm">Moderato</div>
+        <button id="playBtn" onclick="toggleMetronome()">START CLICK</button>
+    </div>
+
+    <div class="section">
+        <h2>2. Dynamic Tuning Drone (Score Order)</h2>
+        <div class="dropdown-container">
+            <label>Select Octave Layout Group: </label>
+            <select id="octaveDropdown" onchange="updatePianoKeys()">
+                <option value="1">Group 1 (A0 - C2)</option>
+                <option value="2">Group 2 (A1 - C3)</option>
+                <option value="3">Group 3 (A2 - C4)</option>
+                <option value="4" selected>Group 4 (A3 - C5) *Default</option>
+                <option value="5">Group 5 (A4 - C6)</option>
+                <option value="6">Group 6 (A5 - C7)</option>
+                <option value="7">Group 7 (A6 - C8)</option>
+            </select>
+        </div>
+
+        <p>Select a family to generate an intelligent drone tone:</p>
+        <ul class="score-list">
+            <li class="score-item">
+                <div>
+                    <span class="instrument-name">I. Flutes</span><br>
+                    <span class="current-source" id="source-flutes">Acoustic Source: Concert Flute</span>
+                </div>
+                <button onclick="playDrone('flutes')">Trigger Drone</button>
+            </li>
+            <li class="score-item">
+                <div>
+                    <span class="instrument-name">II. Double Reeds</span><br>
+                    <span class="current-source" id="source-doubleReeds">Acoustic Source: Oboe</span>
+                </div>
+                <button onclick="playDrone('doubleReeds')">Trigger Drone</button>
+            </li>
+            <li class="score-item">
+                <div>
+                    <span class="instrument-name">III. Clarinets</span><br>
+                    <span class="current-source" id="source-clarinets">Acoustic Source: Bb Soprano Clarinet</span>
+                </div>
+                <button onclick="playDrone('clarinets')">Trigger Drone</button>
+            </li>
+            <li class="score-item">
+                <div>
+                    <span class="instrument-name">IV. Saxophones</span><br>
+                    <span class="current-source" id="source-saxophones">Acoustic Source: Alto Saxophone</span>
+                </div>
+                <button onclick="playDrone('saxophones')">Trigger Drone</button>
+            </li>
+            <li class="score-item">
+                <div>
+                    <span class="instrument-name">V. Brass</span><br>
+                    <span class="current-source" id="source-brass">Acoustic Source: Trumpet</span>
+                </div>
+                <button onclick="playDrone('brass')">Trigger Drone</button>
+            </li>
+            <li class="score-item">
+                <div>
+                    <span class="instrument-name">VI. Orchestral Strings</span><br>
+                    <span class="current-source" id="source-strings">Acoustic Source: Violin</span>
+                </div>
+                <button onclick="playDrone('strings')">Trigger Drone</button>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // METRONOME BACKEND LOGIC
+    let bpm = 120;
+    let isPlaying = false;
+
+    function handleBpmSlider(val) {
+        bpm = parseInt(val);
+        document.getElementById('bpmInput').value = bpm;
+        updateTempoTerm();
+    }
+
+    function handleBpmTyping() {
+        let val = document.getElementById('bpmInput').value;
+        if (val === "") return;
+        let num = parseInt(val);
+        if (!isNaN(num)) {
+            if (num > 350) num = 350;
+            bpm = num;
+            document.getElementById('bpmSlider').value = bpm;
+            updateTempoTerm();
+        }
+    }
+
+    function validateBpm() {
+        let val = parseInt(document.getElementById('bpmInput').value);
+        if (isNaN(val) || val < 20) {
+            bpm = 20;
+        }
+        document.getElementById('bpmInput').value = bpm;
+        document.getElementById('bpmSlider').value = bpm;
+        updateTempoTerm();
+    }
+
+    function adjustBpm(amount) {
+        bpm += amount;
+        if (bpm < 20) bpm = 20;
+        if (bpm > 350) bpm = 350;
+        document.getElementById('bpmInput').value = bpm;
+        document.getElementById('bpmSlider').value = bpm;
+        updateTempoTerm();
+    }
+
+    function updateTempoTerm() {
+        let term = "Moderato";
+        if (bpm < 40) term = "Larghissimo";
+        else if (bpm < 60) term = "Largo";
+        else if (bpm < 80) term = "Adagio";
+        else if (bpm < 100) term = "Andante";
+        else if (bpm < 112) term = "Moderato";
+        else if (bpm < 160) term = "Allegro";
+        else if (bpm < 200) term = "Presto";
+        else if (bpm < 240) term = "Prestissimo";
+        else if (bpm < 300) term = "Velocissimo";
+        else term = "Hyper-Tempo";
+        document.getElementById('tempoTerm').innerText = term;
+    }
+
+    function toggleMetronome() {
+        isPlaying = !isPlaying;
+        document.getElementById('playBtn').innerText = isPlaying ? "STOP CLICK" : "START CLICK";
+        // Audio API generation hooks tie in here later
+    }
+
+    function updatePianoKeys() {
+        // Dynamic labels update depending on selected octave group
+        console.log("Octave layer changed to Group " + document.getElementById('octaveDropdown').value);
+    }
+
+    function playDrone(family) {
+        alert("Audio Engine Setup: Activating behind-the-scenes multi-sampler for " + family);
+    }
+</script>
+</body>
+</html>
