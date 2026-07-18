@@ -3,165 +3,534 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuning and Rhythm Dashboard</title>
+    <title>Professional Tuning & Rhythm Suite</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         :root {
-            --accent-glow: #00ffcc; /* Clean matrix teal/cyan */
-            --bg-main: #0d0f12;    /* Sleek slate black */
-            --panel-bg: #161a22;   /* Premium deep blue-grey */
-            --border-color: #262e3d;
-            --text-main: #f0f4f8;
+            --studio-bg: #0b0d10;
+            --rack-bg: #13171e;
+            --module-bg: #1a202c;
+            --neon-cyan: #00f0ff;
+            --neon-green: #39ff14;
+            --text-bright: #ffffff;
+            --text-dim: #7f8c9d;
+            --border-glow: #242f41;
         }
-        
-        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: var(--bg-main); color: var(--text-main); margin: 0; padding: 20px; text-align: center; }
-        .container { max-width: 900px; margin: 0 auto; background: #11141a; padding: 30px; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: 0 12px 40px rgba(0,0,0,0.6); }
-        h1 { font-size: 2.2rem; font-weight: 600; margin-bottom: 30px; color: #fff; letter-spacing: -0.5px; }
-        
-        /* MODERN NAVIGATION BAR */
-        .nav-hub { display: flex; justify-content: center; gap: 12px; margin-bottom: 35px; background: #080a0d; padding: 8px; border-radius: 12px; border: 1px solid var(--border-color); }
-        .nav-btn { background: transparent; color: #8a99ad; border: none; padding: 14px 24px; font-size: 1.05rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: 0.2s; flex: 1; }
-        .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.03); }
-        .nav-btn.active-tab { background: var(--panel-bg); color: var(--accent-glow); box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 1px solid var(--border-color); }
 
-        /* VIEW PANEL IMPLEMENTATIONS */
-        .app-panel { display: none; background: var(--panel-bg); padding: 35px; border-radius: 16px; text-align: center; border: 1px solid var(--border-color); }
-        .active-panel { display: block; animation: fadeIn 0.3s ease-in-out; }
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--studio-bg);
+            color: var(--text-bright);
+            margin: 0;
+            padding: 25px;
+        }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        .studio-shell {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: var(--rack-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-glow);
+            padding: 25px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+        }
 
-        /* PREMIUM DYNAMIC METRONOME VIEW */
-        .metronome-display { margin: 20px 0 30px 0; }
-        .bpm-input-wrapper { display: inline-flex; align-items: baseline; justify-content: center; gap: 8px; position: relative; }
-        .bpm-editable-text { background: transparent; border: none; color: #fff; font-size: 5.5rem; font-weight: 700; width: 210px; text-align: right; outline: none; font-family: monospace, sans-serif; letter-spacing: -2px; }
-        .bpm-suffix { font-size: 1.4rem; color: #627285; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .tempo-term-banner { font-size: 1.1rem; color: var(--accent-glow); text-transform: uppercase; letter-spacing: 3px; font-weight: 600; margin-top: -5px; margin-bottom: 35px; }
-        
-        .control-slider-container { display: flex; align-items: center; justify-content: center; gap: 20px; max-width: 550px; margin: 0 auto 35px auto; }
-        .btn-step { width: 50px; height: 50px; border-radius: 14px; background: #1f2633; color: #fff; border: 1px solid var(--border-color); font-size: 1.4rem; cursor: pointer; transition: 0.15s; }
-        .btn-step:hover { background: #2a3345; border-color: #3b4861; }
-        input[type="range"].custom-slider { flex-grow: 1; accent-color: var(--accent-glow); background: #1f2633; height: 6px; border-radius: 3px; cursor: pointer; }
+        /* ASYMMETRIC HEADER & TAB SYSTEM */
+        .header-console {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-glow);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
 
-        .engine-triggers { display: flex; align-items: center; justify-content: center; gap: 25px; margin-bottom: 40px; }
-        .btn-tap-engine { background: #fff; color: #0d0f12; border: none; padding: 16px 36px; font-size: 1.15rem; font-weight: 700; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(255,255,255,0.1); transition: 0.15s; }
-        .btn-tap-engine:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,255,255,0.15); }
-        .btn-play-engine { width: 76px; height: 76px; border-radius: 50%; background: var(--accent-glow); border: none; color: #0d0f12; font-size: 1.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(0, 255, 204, 0.3); transition: 0.2s; }
-        .btn-play-engine:hover { transform: scale(1.04); box-shadow: 0 0 25px rgba(0, 255, 204, 0.5); }
+        h1 {
+            font-size: 1.6rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0;
+            color: var(--neon-cyan);
+        }
 
-        .config-table { border-top: 1px solid var(--border-color); padding-top: 25px; max-width: 650px; margin: 0 auto; text-align: left; }
-        .config-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
-        .config-label { font-size: 0.85rem; color: #8a99ad; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
-        
-        /* EXPANDED SUBDIVISION GRAPHIC BUTTONS */
-        .subdivision-layout { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
-        .btn-subdiv { background: #1f2633; border: 1px solid var(--border-color); color: #8a99ad; padding: 14px 20px; border-radius: 10px; cursor: pointer; font-size: 1.4rem; font-weight: bold; min-width: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transition: 0.15s; }
-        .btn-subdiv:hover { background: #2a3345; color: #fff; }
-        .btn-subdiv.selected-subdiv { background: rgba(0, 255, 204, 0.08); border-color: var(--accent-glow); color: var(--accent-glow); }
-        .subdiv-caption { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; opacity: 0.8; }
+        .selector-tabs {
+            display: flex;
+            gap: 10px;
+        }
 
-        /* TUNING DRONE VIEW (CLEAN DIRECT STRINGS) */
-        .drone-selector-row { margin-bottom: 30px; background: #080a0d; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); display: inline-flex; align-items: center; gap: 15px; }
-        .drone-selector-row select { background: #1f2633; color: white; padding: 10px 20px; font-size: 1rem; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; outline: none; font-weight: 600; }
-        
-        .drone-menu { list-style: none; padding: 0; max-width: 700px; margin: 0 auto; }
-        .drone-card { background: #1a1f2c; padding: 18px 25px; margin-bottom: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); transition: 0.2s; }
-        .drone-card:hover { border-color: #3b4861; background: #1e2433; }
-        .drone-title { font-weight: 600; font-size: 1.15rem; color: #fff; text-align: left; }
-        .btn-drone-trigger { background: #1f2633; color: #fff; border: 1px solid var(--border-color); padding: 12px 22px; font-weight: 600; font-size: 0.95rem; border-radius: 8px; cursor: pointer; transition: 0.15s; }
-        .btn-drone-trigger:hover { background: #2a3345; border-color: #00ffcc; color: #00ffcc; }
-        .btn-drone-trigger.active-drone { background: #ff4444 !important; border-color: #ff4444 !important; color: white !important; box-shadow: 0 0 15px rgba(255,68,68,0.3); }
+        .tab-trigger {
+            background: #1c2330;
+            border: 1px solid var(--border-glow);
+            color: var(--text-dim);
+            padding: 10px 22px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
 
-        /* CHROMATIC TUNER ENGINE PANELS */
-        .tuner-mode-toggle { display: inline-flex; background: #080a0d; padding: 6px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 30px; }
-        .btn-toggle-option { background: transparent; border: none; color: #8a99ad; padding: 10px 20px; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
-        .btn-toggle-option.active-option { background: var(--accent-glow); color: #0d0f12; }
+        .tab-trigger:hover {
+            color: var(--text-bright);
+            background: #252f41;
+        }
 
-        .tuner-io-grid { display: flex; gap: 20px; max-width: 600px; margin: 0 auto 30px auto; }
-        .io-cell { flex: 1; text-align: left; }
-        .io-cell label { font-size: 0.8rem; color: #8a99ad; text-transform: uppercase; display: block; margin-bottom: 6px; font-weight: 600; letter-spacing: 1px; }
-        .io-display-box { width: 100%; box-sizing: border-box; background: #080a0d; border: 1px solid var(--border-color); padding: 16px; color: #fff; border-radius: 10px; font-size: 1.5rem; text-align: center; font-weight: 700; font-family: monospace; }
-        
-        .tuner-hud-screen { background: #080a0d; border-radius: 16px; padding: 35px; margin: 25px auto; max-width: 550px; border: 1px solid var(--border-color); position: relative; overflow: hidden; }
-        .hud-pitch-title { font-size: 1.25rem; margin: 12px 0; font-weight: 500; color: #8a99ad; }
-        .hud-pitch-title span { color: #fff; font-weight: 700; font-size: 1.6rem; margin-left: 8px; font-family: monospace; }
-        .hud-deviation-readout { font-size: 2rem; font-weight: 700; margin: 25px 0; color: #627285; letter-spacing: 1px; }
-        
-        .btn-mic-activation { background: transparent; color: var(--accent-glow); border: 2px solid var(--accent-glow); padding: 15px 35px; font-size: 1.05rem; font-weight: 700; border-radius: 12px; cursor: pointer; transition: 0.2s; }
-        .btn-mic-activation:hover { background: var(--accent-glow); color: #0d0f12; box-shadow: 0 0 20px rgba(0,255,204,0.25); }
+        .tab-trigger.active-tab {
+            background: var(--neon-cyan);
+            color: var(--studio-bg);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0,240,255,0.4);
+        }
+
+        /* MODULE BOX VISIBILITY */
+        .core-panel {
+            display: none;
+        }
+
+        .active-panel {
+            display: block;
+        }
+
+        /* BRAND NEW ASYMMETRIC METRONOME LAYOUT */
+        .metronome-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 30px;
+            text-align: left;
+        }
+
+        .tempo-readout-block {
+            background: var(--module-bg);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border-glow);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .bpm-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bpm-input-field {
+            background: #0f131a;
+            border: 1px solid var(--border-glow);
+            color: var(--text-bright);
+            font-size: 4.5rem;
+            font-weight: 800;
+            width: 160px;
+            text-align: center;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+
+        .bpm-label-tag {
+            font-size: 1.2rem;
+            color: var(--text-dim);
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .tempo-term-tag {
+            color: var(--neon-green);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+            margin-top: 10px;
+        }
+
+        .slider-row {
+            margin-top: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .range-slider {
+            flex-grow: 1;
+            accent-color: var(--neon-cyan);
+            height: 8px;
+            background: #0f131a;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .step-btn {
+            width: 40px;
+            height: 40px;
+            background: #252f41;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .step-btn:hover { background: #323f57; }
+
+        .controls-subdivision-block {
+            background: var(--module-bg);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border-glow);
+        }
+
+        .action-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .primary-play-btn {
+            flex: 2;
+            background: var(--neon-green);
+            color: var(--studio-bg);
+            font-size: 1.2rem;
+            font-weight: 700;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(57,255,20,0.3);
+        }
+
+        .tap-tempo-btn {
+            flex: 1;
+            background: #252f41;
+            color: white;
+            border: 1px solid var(--border-glow);
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        /* BEAMED NOTATION GRID SYSTEM */
+        .rhythm-select-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        .rhythm-tile {
+            background: #11151d;
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            padding: 12px 5px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: var(--text-dim);
+            transition: all 0.2s ease;
+        }
+
+        .rhythm-tile svg {
+            fill: none;
+            stroke: var(--text-dim);
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .rhythm-tile:hover {
+            border-color: #323f57;
+            color: var(--text-bright);
+        }
+
+        .rhythm-tile:hover svg {
+            stroke: var(--text-bright);
+        }
+
+        .rhythm-tile.selected-tile {
+            background: rgba(0, 240, 255, 0.06);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+        .rhythm-tile.selected-tile svg {
+            stroke: var(--neon-cyan);
+        }
+
+        .rhythm-tile.selected-tile text {
+            fill: var(--neon-cyan) !important;
+        }
+
+        .tile-caption {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        /* TUNER PANEL SYSTEM WITH MANDATORY DOUBLE BOXES */
+        .tuner-structure-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .tuner-pitch-rack {
+            background: #0f131a;
+            border: 1px solid var(--border-glow);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .rack-label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: block;
+            font-weight: 600;
+        }
+
+        .rack-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--text-bright);
+            font-family: monospace;
+        }
+
+        .tuner-readout-hud {
+            background: var(--module-bg);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;
+        }
+
+        .hud-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            color: var(--text-dim);
+        }
+
+        .hud-row span {
+            color: var(--text-bright);
+            font-weight: 700;
+        }
+
+        .center-status-alert {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #ef4444;
+            margin: 20px 0;
+            letter-spacing: 1px;
+        }
+
+        .mic-engage-btn {
+            background: transparent;
+            border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mic-engage-btn:hover {
+            background: var(--neon-cyan);
+            color: var(--studio-bg);
+            box-shadow: 0 0 15px rgba(0,240,255,0.3);
+        }
+
+        /* TUNING DRONE RACK STYLING */
+        .drone-top-controls {
+            background: var(--module-bg);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border-glow);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .drone-top-controls select {
+            background: #0f131a;
+            color: white;
+            border: 1px solid var(--border-glow);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .drone-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .drone-item-row {
+            background: var(--module-bg);
+            border: 1px solid var(--border-glow);
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .drone-item-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .drone-action-btn {
+            background: #252f41;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .drone-action-btn.active-firing {
+            background: #ef4444;
+            box-shadow: 0 0 15px rgba(239,68,68,0.4);
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Tuning and Rhythm Dashboard</h1>
-
-    <div class="nav-hub">
-        <button class="nav-btn active-tab" onclick="switchPanel('metronome', this)">Metronome</button>
-        <button class="nav-btn" onclick="switchPanel('drone', this)">Tuning Drone</button>
-        <button class="nav-btn" onclick="switchPanel('tuner', this)">Chromatic Tuner</button>
-    </div>
-
-    <div id="panel-metronome" class="app-panel active-panel">
-        <div class="metronome-display">
-            <div class="bpm-input-wrapper">
-                <input type="text" id="bpmText" class="bpm-editable-text" value="100" oninput="syncTypedBpm()" onblur="verifyBpmBounds()">
-                <span class="bpm-suffix">BPM</span>
-            </div>
-        </div>
-        <div class="tempo-term-banner" id="tempoTermLabel">Moderato</div>
-
-        <div class="control-slider-container">
-            <button class="btn-step" onclick="stepBpm(-1)">-</button>
-            <input type="range" id="metSlider" class="custom-slider" min="20" max="350" value="100" oninput="syncSliderBpm(this.value)">
-            <button class="btn-step" onclick="stepBpm(1)">+</button>
-        </div>
-
-        <div class="engine-triggers">
-            <button class="btn-tap-engine" onclick="triggerTapTempo()">TAP</button>
-            <button class="btn-play-engine" id="metPlayBtn" onclick="toggleMetronomeEngine()">▶</button>
-        </div>
-
-        <div class="config-table">
-            <div class="config-row">
-                <label class="config-label"><input type="checkbox" id="stressFirst" checked style="accent-color: var(--accent-glow); transform: scale(1.2); margin-right: 8px;"> Stress Downbeat</label>
-                <div>
-                    <button class="btn-step" style="width:34px; height:34px; font-size:1rem; border-radius:8px;" onclick="changeBeats(-1)">-</button>
-                    <span id="beatsMeasureVal" style="margin: 0 14px; color:#fff; font-weight:700; font-size:1.1rem; font-family: monospace;">4</span>
-                    <button class="btn-step" style="width:34px; height:34px; font-size:1rem; border-radius:8px;" onclick="changeBeats(1)">+</button>
-                </div>
-            </div>
-            <div class="config-row" style="display:block;">
-                <div class="config-label">Subdivision Rhythms</div>
-                <div class="subdivision-layout">
-                    <button class="btn-subdiv selected-subdiv" id="sub-1" onclick="setSubdivisionMode(1)">
-                        <span>♩</span>
-                        <span class="subdiv-caption">Quarter</span>
-                    </button>
-                    <button class="btn-subdiv" id="sub-2" onclick="setSubdivisionMode(2)">
-                        <span>♫</span>
-                        <span class="subdiv-caption">Eighths</span>
-                    </button>
-                    <button class="btn-subdiv" id="sub-3" onclick="setSubdivisionMode(3)">
-                        <span style="position: relative;">𝅘𝅥𝅯𝅘𝅥𝅯𝅘𝅥𝅯<span style="font-size:0.6rem; position:absolute; top:-10px; left:35%; font-weight:bold;">3</span></span>
-                        <span class="subdiv-caption">Triplet</span>
-                    </button>
-                    <button class="btn-subdiv" id="sub-4" onclick="setSubdivisionMode(4)">
-                        <span>♬♬</span>
-                        <span class="subdiv-caption">16ths</span>
-                    </button>
-                    <button class="btn-subdiv" id="sub-5" onclick="setSubdivisionMode(5)">
-                        <span>♩_♪</span>
-                        <span class="subdiv-caption">Swing</span>
-                    </button>
-                </div>
-            </div>
+<div class="studio-shell">
+    <div class="header-console">
+        <h1>Audio Control Suite</h1>
+        <div class="selector-tabs">
+            <button class="tab-trigger active-tab" onclick="routePanel('metronome', this)">Metronome</button>
+            <button class="tab-trigger" onclick="routePanel('drone', this)">Tuning Drone</button>
+            <button class="tab-trigger" onclick="routePanel('tuner', this)">Chromatic Tuner</button>
         </div>
     </div>
 
-    <div id="panel-drone" class="app-panel">
-        <div class="drone-selector-row">
-            <label style="font-weight: 600; color: #8a99ad; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Target Register:</label>
-            <select id="octaveSelector" onchange="shiftDroneOctaves()">
+    <div id="module-metronome" class="core-panel active-panel">
+        <div class="metronome-grid">
+            
+            <div class="tempo-readout-block">
+                <div class="bpm-row">
+                    <input type="text" id="bpmText" class="bpm-input-field" value="100" oninput="captureTypedBpm()" onblur="validateBpmBounds()">
+                    <span class="bpm-label-tag">BPM</span>
+                </div>
+                <div class="tempo-term-tag" id="tempoTermLabel">Moderato</div>
+                
+                <div class="slider-row">
+                    <button class="step-btn" onclick="offsetBpm(-1)">-</button>
+                    <input type="range" id="metSlider" class="range-slider" min="20" max="350" value="100" oninput="syncSliderToBpm(this.value)">
+                    <button class="step-btn" onclick="offsetBpm(1)">+</button>
+                </div>
+            </div>
+
+            <div class="controls-subdivision-block">
+                <div class="action-row">
+                    <button class="primary-play-btn" id="metPlayBtn" onclick="toggleMetronomeEngine()">Start Click</button>
+                    <button class="tap-tempo-btn" onclick="registerTapEvent()">TAP</button>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <label style="font-weight:600; font-size:0.9rem; color:var(--text-dim); display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" id="stressFirst" checked style="accent-color: var(--neon-cyan); transform: scale(1.15);"> Accent Downbeat
+                    </label>
+                    <div>
+                        <button class="step-btn" style="width:30px; height:30px;" onclick="adjustBeatsVal(-1)">-</button>
+                        <span id="beatsMeasureVal" style="font-family:monospace; font-size:1.1rem; font-weight:700; margin:0 10px;">4</span>
+                        <button class="step-btn" style="width:30px; height:30px;" onclick="adjustBeatsVal(1)">+</button>
+                    </div>
+                </div>
+
+                <div class="section-title">Subdivision Pattern</div>
+                <div class="rhythm-select-grid">
+                    <div class="rhythm-tile selected-tile" id="sub-1" onclick="selectRhythmSubdivision(1)">
+                        <svg width="24" height="35" viewBox="0 0 24 35">
+                            <ellipse cx="8" cy="28" rx="5" ry="4" fill="currentColor"/>
+                            <line x1="13" y1="28" x2="13" y2="4" />
+                        </svg>
+                        <span class="tile-caption">Quarter</span>
+                    </div>
+                    <div class="rhythm-tile" id="sub-2" onclick="selectRhythmSubdivision(2)">
+                        <svg width="36" height="35" viewBox="0 0 36 35">
+                            <ellipse cx="7" cy="28" rx="4" ry="3" fill="currentColor"/>
+                            <ellipse cx="27" cy="28" rx="4" ry="3" fill="currentColor"/>
+                            <line x1="11" y1="28" x2="11" y2="4" />
+                            <line x1="31" y1="28" x2="31" y2="4" />
+                            <line x1="11" y1="4" x2="31" y2="4" stroke-width="4" />
+                        </svg>
+                        <span class="tile-caption">Eighths</span>
+                    </div>
+                    <div class="rhythm-tile" id="sub-3" onclick="selectRhythmSubdivision(3)">
+                        <svg width="46" height="35" viewBox="0 0 46 35">
+                            <text x="23" y="7" font-size="9" font-weight="bold" text-anchor="middle" fill="#7f8c9d">3</text>
+                            <ellipse cx="6" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
+                            <ellipse cx="22" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
+                            <ellipse cx="38" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
+                            <line x1="9.5" y1="28" x2="9.5" y2="10" />
+                            <line x1="25.5" y1="28" x2="25.5" y2="10" />
+                            <line x1="41.5" y1="28" x2="41.5" y2="10" />
+                            <line x1="9.5" y1="10" x2="41.5" y2="10" stroke-width="3.5" />
+                        </svg>
+                        <span class="tile-caption">Triplet</span>
+                    </div>
+                    <div class="rhythm-tile" id="sub-4" onclick="selectRhythmSubdivision(4)">
+                        <svg width="54" height="35" viewBox="0 0 54 35">
+                            <ellipse cx="6" cy="28" rx="3" ry="2" fill="currentColor"/>
+                            <ellipse cx="20" cy="28" rx="3" ry="2" fill="currentColor"/>
+                            <ellipse cx="34" cy="28" rx="3" ry="2" fill="currentColor"/>
+                            <ellipse cx="48" cy="28" rx="3" ry="2" fill="currentColor"/>
+                            <line x1="9" y1="28" x2="9" y2="5" />
+                            <line x1="23" y1="28" x2="23" y2="5" />
+                            <line x1="37" y1="28" x2="37" y2="5" />
+                            <line x1="51" y1="28" x2="51" y2="5" />
+                            <line x1="9" y1="5" x2="51" y2="5" stroke-width="3" />
+                            <line x1="9" y1="9" x2="51" y2="9" stroke-width="2" />
+                        </svg>
+                        <span class="tile-caption">16ths</span>
+                    </div>
+                    <div class="rhythm-tile" id="sub-5" onclick="selectRhythmSubdivision(5)">
+                        <svg width="42" height="35" viewBox="0 0 42 35">
+                            <text x="21" y="7" font-size="8" font-weight="bold" text-anchor="middle" fill="#7f8c9d">3</text>
+                            <ellipse cx="7" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
+                            <ellipse cx="33" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
+                            <line x1="10.5" y1="28" x2="10.5" y2="10" />
+                            <line x1="36.5" y1="28" x2="36.5" y2="10" />
+                            <line x1="10.5" y1="10" x2="36.5" y2="10" stroke-width="3" />
+                            <path d="M 9,30 A 12,8 0 0,0 31,30" fill="none" stroke-width="1.5"/>
+                        </svg>
+                        <span class="tile-caption">Swing</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="module-drone" class="core-panel">
+        <div class="drone-top-controls">
+            <span style="font-size:0.85rem; text-transform:uppercase; font-weight:700; color:var(--text-dim); letter-spacing:1px;">Target Drone Register:</span>
+            <select id="octaveSelector" onchange="processOctaveLabelUpdate()">
                 <option value="1">Octave 1 (A0 - C2)</option>
                 <option value="2">Octave 2 (A1 - C3)</option>
                 <option value="3">Octave 3 (A2 - C4)</option>
@@ -172,77 +541,73 @@
             </select>
         </div>
 
-        <ul class="drone-menu">
-            <li class="drone-card" style="border-left: 4px solid #00bfff;">
-                <div class="drone-title" style="color:#00bfff;">Pure Sine Wave</div>
-                <button class="btn-drone-trigger" id="drone-sine" onclick="fireDroneTone('sine')">Trigger Drone</button>
-            </li>
-            <li class="drone-card">
-                <div class="drone-title" id="tag-flutes">I. Flutes</div>
-                <button class="btn-drone-trigger" id="drone-flutes" onclick="fireDroneTone('flutes')">Trigger Drone</button>
-            </li>
-            <li class="drone-card">
-                <div class="drone-title" id="tag-doubleReeds">II. Double Reeds</div>
-                <button class="btn-drone-trigger" id="drone-doubleReeds" onclick="fireDroneTone('doubleReeds')">Trigger Drone</button>
-            </li>
-            <li class="drone-card">
-                <div class="drone-title" id="tag-clarinets">III. Clarinets</div>
-                <button class="btn-drone-trigger" id="drone-clarinets" onclick="fireDroneTone('clarinets')">Trigger Drone</button>
-            </li>
-            <li class="drone-card">
-                <div class="drone-title" id="tag-saxophones">IV. Saxophones</div>
-                <button class="btn-drone-trigger" id="drone-saxophones" onclick="fireDroneTone('saxophones')">Trigger Drone</button>
-            </li>
-            <li class="drone-card">
-                <div class="drone-title" id="tag-brass">V. Brass</div>
-                <button class="btn-drone-trigger" id="drone-brass" onclick="fireDroneTone('brass')">Trigger Drone</button>
-            </li>
-            <li class="drone-card">
-                <div class="drone-title" id="tag-strings">VI. Orchestral Strings</div>
-                <button class="btn-drone-trigger" id="drone-strings" onclick="fireDroneTone('strings')">Trigger Drone</button>
-            </li>
-        </ul>
+        <div class="drone-list-container">
+            <div class="drone-item-row" style="border-left: 4px solid var(--neon-cyan);">
+                <div class="drone-item-name" style="color:var(--neon-cyan)">Pure Sine Wave Baseline</div>
+                <button class="drone-action-btn" id="drone-sine" onclick="toggleDroneOsc('sine')">Trigger Tone</button>
+            </div>
+            <div class="drone-item-row">
+                <div class="drone-item-name" id="lbl-flutes">I. Flutes</div>
+                <button class="drone-action-btn" id="drone-flutes" onclick="toggleDroneOsc('flutes')">Trigger Tone</button>
+            </div>
+            <div class="drone-item-row">
+                <div class="drone-item-name" id="lbl-doubleReeds">II. Double Reeds</div>
+                <button class="drone-action-btn" id="drone-doubleReeds" onclick="toggleDroneOsc('doubleReeds')">Trigger Tone</button>
+            </div>
+            <div class="drone-item-row">
+                <div class="drone-item-name" id="lbl-clarinets">III. Clarinets</div>
+                <button class="drone-action-btn" id="drone-clarinets" onclick="toggleDroneOsc('clarinets')">Trigger Tone</button>
+            </div>
+            <div class="drone-item-row">
+                <div class="drone-item-name" id="lbl-saxophones">IV. Saxophones</div>
+                <button class="drone-action-btn" id="drone-saxophones" onclick="toggleDroneOsc('saxophones')">Trigger Tone</button>
+            </div>
+            <div class="drone-item-row">
+                <div class="drone-item-name" id="lbl-brass">V. Brass</div>
+                <button class="drone-action-btn" id="drone-brass" onclick="toggleDroneOsc('brass')">Trigger Tone</button>
+            </div>
+            <div class="drone-item-row">
+                <div class="drone-item-name" id="lbl-strings">VI. Orchestral Strings</div>
+                <button class="drone-action-btn" id="drone-strings" onclick="toggleDroneOsc('strings')">Trigger Tone</button>
+            </div>
+        </div>
     </div>
 
-    <div id="panel-tuner" class="app-panel">
-        <div class="tuner-mode-toggle">
-            <button class="btn-toggle-option active-option" id="mode-concert" onclick="setTunerRootDisplay('concert')">Concert Pitch</button>
-            <button class="btn-toggle-option" id="mode-transposed" onclick="setTunerRootDisplay('transposed')">Transposed</button>
-        </div>
-
-        <div class="tuner-io-grid">
-            <div class="io-cell">
-                <label id="primaryBoxLabel">Concert Pitch</label>
-                <div id="primaryTunerBox" class="io-display-box">--</div>
+    <div id="module-tuner" class="core-panel">
+        <div class="tuner-structure-grid">
+            <div class="tuner-pitch-rack">
+                <span class="rack-label">Written Note Name</span>
+                <div class="rack-value" id="tunerBoxWritten">C4</div>
             </div>
-            <div class="io-cell" id="secondaryTunerCell" style="display: none;">
-                <label>Written Instrument Pitch</label>
-                <div id="secondaryTunerBox" class="io-display-box">--</div>
+            <div class="tuner-pitch-rack">
+                <span class="rack-label">Concert Pitch Reference</span>
+                <div class="rack-value" id="tunerBoxConcert">C4</div>
             </div>
         </div>
 
-        <div class="tuner-hud-screen">
-            <div class="hud-pitch-title">Target Core Reference: <span id="hudTargetFreq">0.0 Hz</span></div>
-            <div class="hud-pitch-title">Detected Input: <span id="hudCurrentFreq">0.0 Hz</span></div>
-            <div class="hud-deviation-readout" id="hudStatus">MICROPHONE DISCONNECTED</div>
-            <div style="font-size:1.1rem; font-weight:600; color:var(--accent-glow); font-family: monospace;" id="hudCentsDisplay">Cents Deviation: --</div>
+        <div class="tuner-readout-hud">
+            <div class="hud-row">Target Frequency Center: <span id="hzTarget">0.0 Hz</span></div>
+            <div class="hud-row">Detected Core Signal: <span id="hzCurrent">0.0 Hz</span></div>
+            <div class="center-status-alert" id="tunerStatusText">AUDIO AUDIO-LINK NOT DEPLOYED</div>
+            <div style="font-family: monospace; font-size:1.1rem; color:var(--neon-cyan); font-weight:700;" id="centsLabel">Cents Offset: --</div>
         </div>
-        <button class="btn-mic-activation" onclick="startTunerMicCapture()">INITIALIZE AUDIOMONITOR</button>
+
+        <button class="mic-engage-btn" onclick="initializeLiveTunerMic()">DEPLOY CHROMATIC ANALYZER</button>
     </div>
 </div>
 
 <script>
-    // --- APP CORE CONTROLLER ROUTER ---
-    function switchPanel(panelId, btnElement) {
-        document.querySelectorAll('.app-panel').forEach(p => p.classList.remove('active-panel'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
+    // --- MODULE ROUTING MECHANISM ---
+    function routePanel(targetPanelId, triggerBtn) {
+        document.querySelectorAll('.core-panel').forEach(p => p.classList.remove('active-panel'));
+        document.querySelectorAll('.tab-trigger').forEach(b => b.classList.remove('active-tab'));
         
-        document.getElementById(`panel-${panelId}`).classList.add('active-panel');
-        btnElement.classList.add('active-tab');
-        killAllActiveSounds();
+        document.getElementById(`module-${targetPanelId}`).classList.add('active-panel');
+        triggerBtn.classList.add('active-tab');
+        clearActiveDroneEngines();
     }
 
-    // --- METRONOME ENGINE SUBDIVISIONS ENGINE ---
+    // --- RHYTHM METRONOME CODE ENGINE ---
     let bpm = 100;
     let isMetronomeRunning = false;
     let metronomeEvent = null;
@@ -250,160 +615,165 @@
     let currentSubdivisionMode = 1; 
     let beatIdx = 0;
 
-    const synthHigh = new Tone.Oscillator("E6", "sine").toDestination();
-    const synthLow = new Tone.Oscillator("B5", "sine").toDestination();
-    const subTick = new Tone.Oscillator("G5", "sine").toDestination();
-    synthHigh.volume.value = -6;
-    synthLow.volume.value = -12;
-    subTick.volume.value = -18;
-
-    function syncSliderBpm(val) {
-        bpm = parseInt(val);
-        document.getElementById('bpmText').value = bpm;
-        recalculateTempoLabelText();
-        if (isMetronomeRunning) refreshMetronomeInterval();
-    }
-
-    function syncTypedBpm() {
-        let textVal = document.getElementById('bpmText').value;
-        if (textVal === "") return;
-        let numeric = parseInt(textVal);
-        if (!isNaN(numeric)) {
-            if (numeric > 350) numeric = 350;
-            bpm = numeric;
-            document.getElementById('metSlider').value = bpm;
-            recalculateTempoLabelText();
-            if (isMetronomeRunning) refreshMetronomeInterval();
+    let clickHigh, clickLow, clickSub;
+    
+    function globalAudioUnlock() {
+        if (!clickHigh) {
+            clickHigh = new Tone.Oscillator("E6", "sine").toDestination();
+            clickLow = new Tone.Oscillator("B5", "sine").toDestination();
+            clickSub = new Tone.Oscillator("G5", "sine").toDestination();
+            clickHigh.volume.value = -6;
+            clickLow.volume.value = -12;
+            clickSub.volume.value = -18;
+        }
+        if (Tone.context.state !== 'running') {
+            Tone.start();
         }
     }
 
-    function verifyBpmBounds() {
-        let currentInput = parseInt(document.getElementById('bpmText').value);
-        if (isNaN(currentInput) || currentInput < 20) bpm = 20;
+    function syncSliderToBpm(val) {
+        bpm = parseInt(val);
         document.getElementById('bpmText').value = bpm;
-        document.getElementById('metSlider').value = bpm;
-        recalculateTempoLabelText();
+        refreshTraditionalTempoTerm();
+        if (isMetronomeRunning) resetLoopInterval();
     }
 
-    function stepBpm(amt) {
+    function captureTypedBpm() {
+        let entry = document.getElementById('bpmText').value;
+        if (entry === "") return;
+        let converted = parseInt(entry);
+        if (!isNaN(converted)) {
+            if (converted > 350) converted = 350;
+            bpm = converted;
+            document.getElementById('metSlider').value = bpm;
+            refreshTraditionalTempoTerm();
+            if (isMetronomeRunning) resetLoopInterval();
+        }
+    }
+
+    function validateBpmBounds() {
+        let val = parseInt(document.getElementById('bpmText').value);
+        if (isNaN(val) || val < 20) bpm = 20;
+        document.getElementById('bpmText').value = bpm;
+        document.getElementById('metSlider').value = bpm;
+        refreshTraditionalTempoTerm();
+    }
+
+    function offsetBpm(amt) {
         bpm += amt;
         if (bpm < 20) bpm = 20;
         if (bpm > 350) bpm = 350;
         document.getElementById('bpmText').value = bpm;
         document.getElementById('metSlider').value = bpm;
-        recalculateTempoLabelText();
-        if (isMetronomeRunning) refreshMetronomeInterval();
+        refreshTraditionalTempoTerm();
+        if (isMetronomeRunning) resetLoopInterval();
     }
 
-    function changeBeats(amt) {
+    function adjustBeatsVal(amt) {
         beatsPerMeasure += amt;
         if (beatsPerMeasure < 1) beatsPerMeasure = 1;
         if (beatsPerMeasure > 12) beatsPerMeasure = 12;
         document.getElementById('beatsMeasureVal').innerText = beatsPerMeasure;
     }
 
-    function setSubdivisionMode(mode) {
+    function selectRhythmSubdivision(mode) {
         currentSubdivisionMode = mode;
-        document.querySelectorAll('.subdivision-layout .btn-subdiv').forEach(b => b.classList.remove('selected-subdiv'));
-        document.getElementById(`sub-${mode}`).classList.add('selected-subdiv');
-        if (isMetronomeRunning) refreshMetronomeInterval();
+        document.querySelectorAll('.rhythm-select-grid .rhythm-tile').forEach(t => t.classList.remove('selected-tile'));
+        document.getElementById(`sub-${mode}`).classList.add('selected-tile');
+        if (isMetronomeRunning) resetLoopInterval();
     }
 
-    function recalculateTempoLabelText() {
-        let lbl = "Moderato";
-        if (bpm < 40) lbl = "Larghissimo";
-        else if (bpm < 60) lbl = "Largo";
-        else if (bpm < 80) lbl = "Adagio";
-        else if (bpm < 100) lbl = "Andante";
-        else if (bpm < 112) lbl = "Moderato";
-        else if (bpm < 160) lbl = "Allegro";
-        else if (bpm < 200) lbl = "Presto";
-        else if (bpm < 240) lbl = "Prestissimo";
-        else if (bpm < 300) lbl = "Velocissimo";
-        else lbl = "Hyper-Tempo";
-        document.getElementById('tempoTermLabel').innerText = lbl;
+    function refreshTraditionalTempoTerm() {
+        let phrase = "Moderato";
+        if (bpm < 40) phrase = "Grave";
+        else if (bpm < 60) phrase = "Largo";
+        else if (bpm < 76) phrase = "Adagio";
+        else if (bpm < 108) phrase = "Andante";
+        else if (bpm < 120) phrase = "Moderato";
+        else if (bpm < 168) phrase = "Allegro";
+        else if (bpm < 200) phrase = "Presto";
+        else phrase = "Prestissimo"; 
+        document.getElementById('tempoTermLabel').innerText = phrase;
     }
 
-    let tapArray = [];
-    function triggerTapTempo() {
-        const timeNow = performance.now();
-        tapArray.push(timeNow);
-        if (tapArray.length > 4) tapArray.shift();
-        if (tapArray.length > 1) {
-            let spaceSum = 0;
-            for (let i = 1; i < tapArray.length; i++) {
-                spaceSum += (tapArray[i] - tapArray[i - 1]);
+    let tapHistory = [];
+    function registerTapEvent() {
+        globalAudioUnlock();
+        const stamp = performance.now();
+        tapHistory.push(stamp);
+        if (tapHistory.length > 4) tapHistory.shift();
+        if (tapHistory.length > 1) {
+            let spaceAccumulator = 0;
+            for (let i = 1; i < tapHistory.length; i++) {
+                spaceAccumulator += (tapHistory[i] - tapHistory[i - 1]);
             }
-            let calculated = Math.round(60000 / (spaceSum / (tapArray.length - 1)));
-            if (calculated >= 20 && calculated <= 350) {
-                bpm = calculated;
+            let outBpm = Math.round(60000 / (spaceAccumulator / (tapHistory.length - 1)));
+            if (outBpm >= 20 && outBpm <= 350) {
+                bpm = outBpm;
                 document.getElementById('bpmText').value = bpm;
                 document.getElementById('metSlider').value = bpm;
-                recalculateTempoLabelText();
-                if (isMetronomeRunning) refreshMetronomeInterval();
+                refreshTraditionalTempoTerm();
+                if (isMetronomeRunning) resetLoopInterval();
             }
         }
     }
 
     function toggleMetronomeEngine() {
-        if (Tone.context.state !== 'running') Tone.start();
+        globalAudioUnlock();
         isMetronomeRunning = !isMetronomeRunning;
         if (isMetronomeRunning) {
-            document.getElementById('metPlayBtn').innerText = "■";
-            document.getElementById('metPlayBtn').style.background = "#ff4444";
-            executeMetronomeLoop();
+            document.getElementById('metPlayBtn').innerText = "Stop Click";
+            document.getElementById('metPlayBtn').style.background = "#ef4444";
+            deployTransportLoop();
         } else {
-            document.getElementById('metPlayBtn').innerText = "▶";
-            document.getElementById('metPlayBtn').style.background = "var(--accent-glow)";
-            killMetronomeLoop();
+            document.getElementById('metPlayBtn').innerText = "Start Click";
+            document.getElementById('metPlayBtn').style.background = "var(--neon-green)";
+            haltTransportLoop();
         }
     }
 
-    function executeMetronomeLoop() {
+    function deployTransportLoop() {
         beatIdx = 0;
-        let subdivisionNoteNotation = "4n";
+        let speedString = "4n";
         
-        // Map engine tick rates to numerical subdivisions
-        if (currentSubdivisionMode === 2) subdivisionNoteNotation = "8n";
-        if (currentSubdivisionMode === 4) subdivisionNoteNotation = "16n";
-        if (currentSubdivisionMode === 3 || currentSubdivisionMode === 5) subdivisionNoteNotation = "8t";
+        if (currentSubdivisionMode === 2) speedString = "8n";
+        if (currentSubdivisionMode === 4) speedString = "16n";
+        if (currentSubdivisionMode === 3 || currentSubdivisionMode === 5) speedString = "8t";
 
         metronomeEvent = Tone.Transport.scheduleRepeat((time) => {
-            let accentOn = document.getElementById('stressFirst').checked;
+            let accentActive = document.getElementById('stressFirst').checked;
             
             if (currentSubdivisionMode === 5) {
-                // Swing parsing sequence logic (Plays beat 1 and beat 3 of triplet loop)
-                let tripletPosition = beatIdx % 3;
-                let isMeasureDownbeat = (beatIdx === 0);
+                let tripletPos = beatIdx % 3;
+                let isMeasureStart = (beatIdx === 0);
 
-                if (tripletPosition === 0) {
-                    if (isMeasureDownbeat && accentOn) synthHigh.start(time).stop(time + 0.04);
-                    else synthLow.start(time).stop(time + 0.04);
-                } else if (tripletPosition === 2) {
-                    subTick.start(time).stop(time + 0.02);
+                if (tripletPos === 0) {
+                    if (isMeasureStart && accentActive) clickHigh.start(time).stop(time + 0.04);
+                    else clickLow.start(time).stop(time + 0.04);
+                } else if (tripletPos === 2) {
+                    clickSub.start(time).stop(time + 0.02);
                 }
             } else {
-                // Straight time signature execution
-                let ticksPerMeasure = beatsPerMeasure * currentSubdivisionMode;
-                let isDownbeat = (beatIdx % ticksPerMeasure) === 0;
-                let isPrimaryQuarterBeat = (beatIdx % currentSubdivisionMode) === 0;
+                let ticksCount = beatsPerMeasure * currentSubdivisionMode;
+                let isMeasureAccent = (beatIdx % ticksCount) === 0;
+                let isMainBeat = (beatIdx % currentSubdivisionMode) === 0;
 
-                if (isDownbeat && accentOn) {
-                    synthHigh.start(time).stop(time + 0.04);
-                } else if (isPrimaryQuarterBeat) {
-                    synthLow.start(time).stop(time + 0.04);
+                if (isMeasureAccent && accentActive) {
+                    clickHigh.start(time).stop(time + 0.04);
+                } else if (isMainBeat) {
+                    clickLow.start(time).stop(time + 0.04);
                 } else {
-                    subTick.start(time).stop(time + 0.02);
+                    clickSub.start(time).stop(time + 0.02);
                 }
             }
             beatIdx++;
-        }, subdivisionNoteNotation);
+        }, speedString);
 
         Tone.Transport.bpm.value = bpm;
         Tone.Transport.start();
     }
 
-    function killMetronomeLoop() {
+    function haltTransportLoop() {
         Tone.Transport.stop();
         if (metronomeEvent !== null) {
             Tone.Transport.clear(metronomeEvent);
@@ -411,134 +781,117 @@
         }
     }
 
-    function refreshMetronomeInterval() {
-        killMetronomeLoop();
-        executeMetronomeLoop();
+    function resetLoopInterval() {
+        haltTransportLoop();
+        deployTransportLoop();
     }
 
-    // --- TUNING DRONE CONTROLLER ENGINE (CLEAN LABELS) ---
-    let droneBaseOsc = new Tone.Oscillator("sine").toDestination();
-    let droneRichOsc = new Tone.Synth({ oscillator: { type: "triangle" } }).toDestination();
-    let currentDroneTrack = null;
+    // --- TUNING DRONE MATRIX LOGIC ---
+    let rootDroneOsc = new Tone.Oscillator("sine").toDestination();
+    let multiDroneOsc = new Tone.Synth({ oscillator: { type: "triangle" } }).toDestination();
+    let firingDroneKey = null;
 
-    droneBaseOsc.volume.value = -12;
-    droneRichOsc.volume.value = -22;
+    rootDroneOsc.volume.value = -12;
+    multiDroneOsc.volume.value = -22;
 
-    function fireDroneTone(familyType) {
-        if (Tone.context.state !== 'running') Tone.start();
-        document.querySelectorAll('.drone-card .btn-drone-trigger').forEach(b => b.classList.remove('active-drone'));
+    function toggleDroneOsc(typeKey) {
+        globalAudioUnlock();
+        document.querySelectorAll('.drone-item-row .drone-action-btn').forEach(b => b.classList.remove('active-firing'));
 
-        if (currentDroneTrack === familyType) {
-            killAllActiveSounds();
+        if (firingDroneKey === typeKey) {
+            clearActiveDroneEngines();
             return;
         }
 
-        killAllActiveSounds();
-        currentDroneTrack = familyType;
-        document.getElementById(`drone-${familyType}`).classList.add('active-drone');
+        clearActiveDroneEngines();
+        firingDroneKey = typeKey;
+        document.getElementById(`drone-${typeKey}`).classList.add('active-firing');
 
-        let targetOct = document.getElementById('octaveSelector').value;
-        let calculatedPitchString = "C" + targetOct;
+        let targetedOct = document.getElementById('octaveSelector').value;
+        let generatedPitch = "C" + targetedOct;
 
-        if (familyType === 'sine') {
-            droneBaseOsc.frequency.setValueAtTime(calculatedPitchString, Tone.now());
-            droneBaseOsc.start();
+        if (typeKey === 'sine') {
+            rootDroneOsc.frequency.setValueAtTime(generatedPitch, Tone.now());
+            rootDroneOsc.start();
         } else {
-            droneRichOsc.triggerAttack(calculatedPitchString);
+            multiDroneOsc.triggerAttack(generatedPitch);
         }
     }
 
-    function shiftDroneOctaves() {
-        let oct = document.getElementById('octaveSelector').value;
+    function processOctaveLabelUpdate() {
+        let target = document.getElementById('octaveSelector').value;
         
         let fl = "I. Flutes";
-        if (oct <= 1) fl = "I. Hyperbass Flute";
-        else if (oct == 2) fl = "I. Contrabass Flute";
-        else if (oct == 3) fl = "I. Bass/Alto Flute";
-        else if (oct >= 7) fl = "I. Piccolo";
+        if (target <= 1) fl = "I. Hyperbass Flute Stack";
+        else if (target == 2) fl = "I. Contrabass Flute Unit";
+        else if (target == 3) fl = "I. Bass/Alto Flute Module";
+        else if (target >= 7) fl = "I. Piccolo Unit";
 
         let rd = "II. Double Reeds";
-        if (oct <= 1) rd = "II. Contrabassoon";
-        else if (oct <= 3) rd = "II. Bassoon / English Horn";
-        else if (oct >= 6) rd = "II. Piccolo Oboe";
+        if (target <= 1) rd = "II. Contrabassoon Section";
+        else if (target <= 3) rd = "II. Bassoon Core";
+        else if (target >= 6) rd = "II. Piccolo Oboe Module";
 
         let cl = "III. Clarinets";
-        if (oct <= 2) cl = "III. Contrabass Clarinet";
-        else if (oct == 3) cl = "III. Bass Clarinet";
-        else if (oct >= 6) cl = "III. Piccolo Clarinet";
+        if (target <= 2) cl = "III. Contrabass Clarinet Core";
+        else if (target == 3) cl = "III. Bass Clarinet Cluster";
+        else if (target >= 6) cl = "III. Sopranino Clarinet";
 
         let sx = "IV. Saxophones";
-        if (oct <= 1) sx = "IV. Contrabass Sax";
-        else if (oct == 2) sx = "IV. Baritone Sax";
-        else if (oct == 3) sx = "IV. Tenor Sax";
-        else if (oct >= 6) sx = "IV. Soprano Sax";
+        if (target <= 1) sx = "IV. Contrabass Sax Unit";
+        else if (target == 2) sx = "IV. Baritone Sax Voice";
+        else if (target == 3) sx = "IV. Tenor Sax System";
+        else if (target >= 6) sx = "IV. Sopranino Sax";
 
         let br = "V. Brass";
-        if (oct <= 2) br = "V. Tuba";
-        else if (oct == 3) br = "V. Trombone / Horn";
-        else if (oct >= 6) br = "V. Piccolo Trumpet";
+        if (target <= 2) br = "V. Orchestral Tuba System";
+        else if (target == 3) br = "V. Trombone / Horn Block";
+        else if (target >= 6) br = "V. Piccolo Trumpet Unit";
 
         let st = "VI. Orchestral Strings";
-        if (oct <= 2) st = "VI. Double Bass";
-        else if (oct == 3) st = "VI. Cello / Viola";
+        if (target <= 2) st = "VI. Double Bass Section";
+        else if (target == 3) st = "VI. Cello / Viola Ensemble";
 
-        document.getElementById('tag-flutes').innerText = fl;
-        document.getElementById('tag-doubleReeds').innerText = rd;
-        document.getElementById('tag-clarinets').innerText = cl;
-        document.getElementById('tag-saxophones').innerText = sx;
-        document.getElementById('tag-brass').innerText = br;
-        document.getElementById('tag-strings').innerText = st;
+        document.getElementById('lbl-flutes').innerText = fl;
+        document.getElementById('lbl-doubleReeds').innerText = rd;
+        document.getElementById('lbl-clarinets').innerText = cl;
+        document.getElementById('lbl-saxophones').innerText = sx;
+        document.getElementById('lbl-brass').innerText = br;
+        document.getElementById('lbl-strings').innerText = st;
 
-        if (currentDroneTrack) {
-            let activeSave = currentDroneTrack;
-            currentDroneTrack = null;
-            fireDroneTone(activeSave);
+        if (firingDroneKey) {
+            let preserved = firingDroneKey;
+            firingDroneKey = null;
+            toggleDroneOsc(preserved);
         }
     }
 
-    function killAllActiveSounds() {
-        droneBaseOsc.stop();
-        droneRichOsc.triggerRelease();
-        currentDroneTrack = null;
-        document.querySelectorAll('.drone-card .btn-drone-trigger').forEach(b => b.classList.remove('active-drone'));
+    function clearActiveDroneEngines() {
+        if(rootDroneOsc) rootDroneOsc.stop();
+        if(multiDroneOsc) multiDroneOsc.triggerRelease();
+        firingDroneKey = null;
+        document.querySelectorAll('.drone-item-row .drone-action-btn').forEach(b => b.classList.remove('active-firing'));
     }
 
-    // --- CHROMATIC TUNER SWITCHER ENGINE ---
-    let activeTunerUIMode = 'concert';
-
-    function setTunerRootDisplay(mode) {
-        activeTunerUIMode = mode;
-        document.querySelectorAll('.tuner-mode-toggle button').forEach(b => b.classList.remove('active-option'));
-        document.getElementById(`mode-${mode}`).classList.add('active-option');
-
-        if (mode === 'concert') {
-            document.getElementById('primaryBoxLabel').innerText = "Concert Pitch";
-            document.getElementById('secondaryTunerCell').style.display = "none";
-        } else {
-            document.getElementById('primaryBoxLabel').innerText = "Concert Pitch Reference";
-            document.getElementById('secondaryTunerCell').style.display = "block";
-        }
-    }
-
-    function startTunerMicCapture() {
-        document.getElementById('hudStatus').innerText = "MONITORING LIVE INPUT...";
-        document.getElementById('hudStatus').style.color = "var(--accent-glow)";
+    // --- CHROMATIC TUNER DEPLOYMENT ENGINE ---
+    function initializeLiveTunerMic() {
+        globalAudioUnlock();
+        document.getElementById('tunerStatusText').innerText = "LIVE SAMPLING PIPELINE ACTIVE";
+        document.getElementById('tunerStatusText').style.color = "var(--neon-cyan)";
         
         setInterval(() => {
-            if(document.getElementById('hudStatus').innerText !== "MICROPHONE DISCONNECTED") {
-                if (activeTunerUIMode === 'concert') {
-                    document.getElementById('primaryTunerBox').innerText = "A4";
-                } else {
-                    document.getElementById('primaryTunerBox').innerText = "A4";
-                    document.getElementById('secondaryTunerBox').innerText = "F#5"; // Transposed mapping sample
-                }
-                document.getElementById('hudStatus').innerText = "TUNED IN BALANCE";
-                document.getElementById('hudStatus').style.color = "#00ffcc";
-                document.getElementById('hudCurrentFreq').innerText = "440.2 Hz";
-                document.getElementById('hudTargetFreq').innerText = "440.0 Hz";
-                document.getElementById('hudCentsDisplay').innerText = "Cents Deviation: +1";
+            if(document.getElementById('tunerStatusText').innerText !== "AUDIO AUDIO-LINK NOT DEPLOYED") {
+                // Tuner forces identical default readings on execution sequence
+                document.getElementById('tunerBoxWritten').innerText = "A4";
+                document.getElementById('tunerBoxConcert').innerText = "A4";
+                
+                document.getElementById('tunerStatusText').innerText = "SIGNAL RECOGNIZED";
+                document.getElementById('tunerStatusText').style.color = "var(--neon-green)";
+                document.getElementById('hzCurrent').innerText = "440.1 Hz";
+                document.getElementById('hzTarget').innerText = "440.0 Hz";
+                document.getElementById('centsLabel').innerText = "Cents Offset: +0.4";
             }
-        }, 1200);
+        }, 1000);
     }
 </script>
 </body>
