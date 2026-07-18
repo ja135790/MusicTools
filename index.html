@@ -6,23 +6,66 @@
     <title>Tuning and Rhythm Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 20px; text-align: center; }
-        .container { max-width: 800px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h1 { color: #00ff88; margin-bottom: 25px; }
-        .section { background: #2a2a2a; padding: 15px; margin-bottom: 20px; border-radius: 8px; border-left: 5px solid #00ff88; text-align: left; }
-        .section h2 { margin-top: 0; color: #fff; }
-        .metronome-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
-        input[type="text"] { width: 70px; background: #333; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 4px; text-align: center; font-size: 1.1rem; font-weight: bold; }
-        input[type="range"] { flex-grow: 1; accent-color: #00ff88; }
-        button { background: #00ff88; color: #121212; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
-        button:hover { background: #00cc6c; }
-        .score-list { list-style: none; padding: 0; }
-        .score-item { background: #333; padding: 12px; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
-        .instrument-name { font-weight: bold; color: #00ff88; }
-        .current-source { font-size: 0.85rem; color: #aaa; font-style: italic; }
-        .dropdown-container { margin: 15px 0; }
-        select { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; }
-        .active-playing { background: #00ff88 !important; color: #121212 !important; }
+        :root {
+            --primary: #ff5722; /* iMusic-inspired orange accent */
+            --bg-dark: #1a1a1a;
+            --panel-bg: #242424;
+            --text-light: #e0e0e0;
+        }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg-dark); color: var(--text-light); margin: 0; padding: 20px; text-align: center; }
+        .container { max-width: 850px; margin: 0 auto; background: #111; padding: 25px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.7); }
+        h1 { color: #fff; font-weight: 400; margin-bottom: 30px; letter-spacing: 1px; }
+        
+        /* NAV HUB STYLING */
+        .nav-hub { display: flex; justify-content: center; gap: 15px; margin-bottom: 35px; }
+        .nav-btn { background: var(--panel-bg); color: #fff; border: 2px solid #333; padding: 15px 25px; font-size: 1.1rem; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; flex: 1; }
+        .nav-btn:hover { background: #2f2f2f; border-color: var(--primary); }
+        .nav-btn.active-tab { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        /* APP PANELS CONTAINER */
+        .app-panel { display: none; background: var(--panel-bg); padding: 30px; border-radius: 12px; text-align: center; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5); }
+        .active-panel { display: block; }
+
+        /* IMUSIC METRONOME ENGINE LAYOUT */
+        .imusic-bpm-view { font-size: 5rem; font-weight: bold; color: var(--primary); margin: 10px 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .imusic-bpm-view input[type="text"] { background: transparent; border: none; color: var(--primary); font-size: 5rem; font-weight: bold; width: 160px; text-align: right; font-family: inherit; outline: none; }
+        .imusic-bpm-unit { font-size: 1.5rem; color: #888; align-self: flex-end; margin-bottom: 15px; }
+        .imusic-tempo-text { font-size: 1.1rem; color: #aaa; text-transform: uppercase; margin-bottom: 25px; letter-spacing: 2px; }
+        
+        .slider-row { display: flex; align-items: center; justify-content: center; gap: 20px; max-width: 500px; margin: 0 auto 30px auto; }
+        .circle-inc-dec { width: 45px; height: 45px; border-radius: 50%; background: #333; color: #fff; border: none; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .circle-inc-dec:hover { background: #444; }
+        input[type="range"].imusic-slider { flex-grow: 1; accent-color: var(--primary); background: #444; height: 4px; border-radius: 2px; cursor: pointer; }
+
+        .action-row { display: flex; align-items: center; justify-content: center; gap: 30px; margin-bottom: 35px; }
+        .imusic-tap-btn { background: #fff; color: #111; border: none; padding: 15px 40px; font-size: 1.3rem; font-weight: bold; border-radius: 6px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .imusic-play-btn { width: 70px; height: 70px; border-radius: 50%; background: var(--primary); border: none; color: white; font-size: 1.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(255, 87, 34, 0.4); }
+
+        .settings-block { border-top: 1px solid #333; padding-top: 20px; max-width: 600px; margin: 0 auto; text-align: left; }
+        .setting-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 0.95rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* SUBDIVISION ICON SELECTORS */
+        .subdivision-grid { display: flex; gap: 10px; margin-top: 5px; }
+        .sub-btn { background: #333; border: 2px solid transparent; color: white; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 1.2rem; min-width: 55px; text-align: center; }
+        .sub-btn:hover { background: #444; }
+        .sub-btn.active-sub { background: var(--primary); border-color: var(--primary); }
+
+        /* TUNING DRONE LAYOUT */
+        .score-list { list-style: none; padding: 0; max-width: 650px; margin: 0 auto; }
+        .score-item { background: #2d2d2d; padding: 16px 20px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .instrument-title { font-weight: bold; font-size: 1.1rem; color: #fff; }
+        .source-tag { font-size: 0.9rem; color: #ff9800; font-weight: 500; display: block; margin-top: 3px; }
+        .trigger-btn { background: #00ff88; color: #111; border: none; padding: 10px 18px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .trigger-btn.active-drone { background: #ff4444; color: white; }
+
+        /* CHROMATIC TUNER ENGINE HUDS */
+        .tuner-matrix { display: flex; gap: 15px; max-width: 500px; margin: 0 auto 25px auto; }
+        .tuner-input-group { flex: 1; text-align: left; }
+        .tuner-input-group label { font-size: 0.85rem; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 5px; }
+        .tuner-box { width: 100%; box-sizing: border-box; background: #333; border: 1px solid #444; padding: 10px; color: #fff; border-radius: 6px; font-size: 1.1rem; text-align: center; }
+        .live-hud { background: #1a1a1a; border-radius: 12px; padding: 25px; margin: 20px auto; max-width: 500px; border: 2px solid #333; }
+        .hud-pitch-line { font-size: 1.5rem; margin: 10px 0; font-weight: bold; }
+        .hud-pitch-line span { color: var(--primary); }
     </style>
 </head>
 <body>
@@ -30,24 +73,55 @@
 <div class="container">
     <h1>Tuning and Rhythm Dashboard</h1>
 
-    <div class="section">
-        <h2>1. Precision Metronome</h2>
-        <div class="metronome-controls">
-            <button onclick="adjustBpm(-1)">-</button>
-            <input type="text" id="bpmInput" value="120" oninput="handleBpmTyping()" onblur="validateBpm()">
-            <span>BPM</span>
-            <button onclick="adjustBpm(1)">+</button>
-            <input type="range" id="bpmSlider" min="20" max="350" value="120" oninput="handleBpmSlider(this.value)">
-        </div>
-        <div style="margin-bottom: 10px; font-weight: bold; color: #00ff88;" id="tempoTerm">Moderato</div>
-        <button id="playBtn" onclick="toggleMetronome()">START CLICK</button>
+    <div class="nav-hub">
+        <button class="nav-btn active-tab" onclick="switchPanel('metronome', this)">Metronome</button>
+        <button class="nav-btn" onclick="switchPanel('drone', this)">Tuning Drone</button>
+        <button class="nav-btn" onclick="switchPanel('tuner', this)">Chromatic Tuner</button>
     </div>
 
-    <div class="section">
-        <h2>2. Dynamic Tuning Drone</h2>
-        <div class="dropdown-container">
-            <label>Select Octave: </label>
-            <select id="octaveDropdown" onchange="updateOctaveSelection()">
+    <div id="panel-metronome" class="app-panel active-panel">
+        <div class="imusic-bpm-view">
+            <input type="text" id="bpmText" value="100" oninput="syncTypedBpm()" onblur="verifyBpmBounds()">
+            <span class="imusic-bpm-unit">BPM</span>
+        </div>
+        <div class="imusic-tempo-text" id="tempoTermLabel">Moderato</div>
+
+        <div class="slider-row">
+            <button class="circle-inc-dec" onclick="stepBpm(-1)">-</button>
+            <input type="range" id="metSlider" class="imusic-slider" min="20" max="350" value="100" oninput="syncSliderBpm(this.value)">
+            <button class="circle-inc-dec" onclick="stepBpm(1)">+</button>
+        </div>
+
+        <div class="action-row">
+            <button class="imusic-tap-btn" onclick="triggerTapTempo()">TAP</button>
+            <button class="imusic-play-btn" id="metPlayBtn" onclick="toggleMetronomeEngine()">▶</button>
+        </div>
+
+        <div class="settings-block">
+            <div class="setting-item">
+                <label><input type="checkbox" id="stressFirst" checked> Stress First Beat</label>
+                <div>
+                    <button class="circle-inc-dec" style="width:30px; height:30px; font-size:1rem; display:inline-flex;" onclick="changeBeats(-1)">-</button>
+                    <span id="beatsMeasureVal" style="margin: 0 10px; color:#fff; font-weight:bold;">4</span>
+                    <button class="circle-inc-dec" style="width:30px; height:30px; font-size:1rem; display:inline-flex;" onclick="changeBeats(1)">+</button>
+                </div>
+            </div>
+            <div class="setting-item" style="display:block;">
+                <div>Subdivision</div>
+                <div class="subdivision-grid">
+                    <button class="sub-btn active-sub" id="sub-1" onclick="setSubdivisionMode(1)">♩</button>
+                    <button class="sub-btn" id="sub-2" onclick="setSubdivisionMode(2)">♪</button>
+                    <button class="sub-btn" id="sub-4" onclick="setSubdivisionMode(4)">♬</button>
+                    <button class="sub-btn" id="sub-3" onclick="setSubdivisionMode(3)"> triplet </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="panel-drone" class="app-panel">
+        <div style="margin-bottom: 25px;">
+            <label style="font-weight: bold; margin-right: 10px;">Select Octave:</label>
+            <select id="octaveSelector" onchange="shiftDroneOctaves()" style="background:#333; color:white; padding:8px 15px; border-radius:6px; border:1px solid #444;">
                 <option value="1">Octave 1 (A0 - C2)</option>
                 <option value="2">Octave 2 (A1 - C3)</option>
                 <option value="3">Octave 3 (A2 - C4)</option>
@@ -58,276 +132,58 @@
             </select>
         </div>
 
-        <p>Select a sound source to generate a continuous reference drone:</p>
         <ul class="score-list">
-            <li class="score-item" style="border-left: 4px solid #00bfff;">
+            <li class="score-item" style="border-left: 5px solid #00bfff;">
                 <div>
-                    <span class="instrument-name" style="color: #00bfff;">Pure Sine Wave</span><br>
-                    <span class="current-source">Perfect Equal Temperament Baseline</span>
+                    <div class="instrument-title" style="color:#00bfff;">Pure Sine Wave</div>
                 </div>
-                <button id="btn-sine" onclick="toggleDrone('sine')">Trigger Drone</button>
+                <button class="trigger-btn" id="drone-sine" onclick="fireDroneTone('sine')">Trigger Drone</button>
             </li>
             <li class="score-item">
                 <div>
-                    <span class="instrument-name">I. Flutes</span><br>
-                    <span class="current-source" id="source-flutes">Acoustic Source: Concert Flute</span>
+                    <div class="instrument-title">I. Flutes</div>
+                    <span class="source-tag" id="tag-flutes">Concert Flute</span>
                 </div>
-                <button id="btn-flutes" onclick="toggleDrone('flutes')">Trigger Drone</button>
+                <button class="trigger-btn" id="drone-flutes" onclick="fireDroneTone('flutes')">Trigger Drone</button>
             </li>
             <li class="score-item">
                 <div>
-                    <span class="instrument-name">II. Double Reeds</span><br>
-                    <span class="current-source" id="source-doubleReeds">Acoustic Source: Oboe</span>
+                    <div class="instrument-title">II. Double Reeds</div>
+                    <span class="source-tag" id="tag-doubleReeds">Oboe</span>
                 </div>
-                <button id="btn-doubleReeds" onclick="toggleDrone('doubleReeds')">Trigger Drone</button>
+                <button class="trigger-btn" id="drone-doubleReeds" onclick="fireDroneTone('doubleReeds')">Trigger Drone</button>
             </li>
             <li class="score-item">
                 <div>
-                    <span class="instrument-name">III. Clarinets</span><br>
-                    <span class="current-source" id="source-clarinets">Acoustic Source: Bb Soprano Clarinet</span>
+                    <div class="instrument-title">III. Clarinets</div>
+                    <span class="source-tag" id="tag-clarinets">Bb Soprano Clarinet</span>
                 </div>
-                <button id="btn-clarinets" onclick="toggleDrone('clarinets')">Trigger Drone</button>
+                <button class="trigger-btn" id="drone-clarinets" onclick="fireDroneTone('clarinets')">Trigger Drone</button>
             </li>
             <li class="score-item">
                 <div>
-                    <span class="instrument-name">IV. Saxophones</span><br>
-                    <span class="current-source" id="source-saxophones">Acoustic Source: Alto Saxophone</span>
+                    <div class="instrument-title">IV. Saxophones</div>
+                    <span class="source-tag" id="tag-saxophones">Alto Saxophone</span>
                 </div>
-                <button id="btn-saxophones" onclick="toggleDrone('saxophones')">Trigger Drone</button>
+                <button class="trigger-btn" id="drone-saxophones" onclick="fireDroneTone('saxophones')">Trigger Drone</button>
             </li>
             <li class="score-item">
                 <div>
-                    <span class="instrument-name">V. Brass</span><br>
-                    <span class="current-source" id="source-brass">Acoustic Source: Trumpet</span>
+                    <span class="instrument-title">V. Brass</span>
+                    <span class="source-tag" id="tag-brass">Trumpet</span>
                 </div>
-                <button id="btn-brass" onclick="toggleDrone('brass')">Trigger Drone</button>
+                <button class="trigger-btn" id="drone-brass" onclick="fireDroneTone('brass')">Trigger Drone</button>
             </li>
             <li class="score-item">
                 <div>
-                    <span class="instrument-name">VI. Orchestral Strings</span><br>
-                    <span class="current-source" id="source-strings">Acoustic Source: Violin</span>
+                    <span class="instrument-title">VI. Orchestral Strings</span>
+                    <span class="source-tag" id="tag-strings">Violin</span>
                 </div>
-                <button id="btn-strings" onclick="toggleDrone('strings')">Trigger Drone</button>
+                <button class="trigger-btn" id="drone-strings" onclick="fireDroneTone('strings')">Trigger Drone</button>
             </li>
         </ul>
     </div>
-</div>
 
-<script>
-    // --- AUDIO SYSTEM INITIALIZATION ---
-    let activeSynth = null;
-    let currentPlayingType = null;
-
-    // A simple polyphonic sound engine setup to handle clean pitches immediately
-    const droneOscillator = new Tone.Oscillator({
-        type: "sine",
-        volume: -12
-    }).toDestination();
-
-    // Secondary rich sound synthesis array mimicking an instrumental texture block
-    const complexSynth = new Tone.Synth({
-        oscillator: { type: "sawtooth" },
-        envelope: { attack: 0.2, decay: 0.1, sustain: 1, release: 0.5 },
-        volume: -24
-    }).toDestination();
-
-    function toggleDrone(type) {
-        // Start Tone audio context on primary manual action
-        if (Tone.context.state !== 'running') {
-            Tone.start();
-        }
-
-        // Reset previous buttons visual states
-        document.querySelectorAll('.score-item button').forEach(btn => btn.classList.remove('active-playing'));
-
-        // If clicking the currently running item, stop everything
-        if (currentPlayingType === type) {
-            stopAllAudio();
-            return;
-        }
-
-        stopAllAudio();
-        currentPlayingType = type;
-        document.getElementById(`btn-${type}`).classList.add('active-playing');
-
-        // Resolve current target central frequency based on selected octave
-        let selectedOctave = document.getElementById('octaveDropdown').value;
-        let noteName = "C" + selectedOctave; // e.g. "C4"
-
-        if (type === 'sine') {
-            droneOscillator.frequency.setValueAtTime(noteName, Tone.now());
-            droneOscillator.start();
-        } else {
-            // Instrumental synthesizer simulation
-            complexSynth.triggerAttack(noteName);
-        }
-    }
-
-    function stopAllAudio() {
-        droneOscillator.stop();
-        complexSynth.triggerRelease();
-        currentPlayingType = null;
-    }
-
-    function updateOctaveSelection() {
-        let octave = document.getElementById('octaveDropdown').value;
-        
-        // Comprehensive dynamic text router updates
-        let fluteTxt = "Concert Flute";
-        if (octave <= 1) fluteTxt = "Hyperbass Flute";
-        else if (octave == 2) fluteTxt = "Contrabass Flute";
-        else if (octave == 3) fluteTxt = "Bass/Alto Flute";
-        else if (octave >= 7) fluteTxt = "Piccolo";
-
-        let reedTxt = "Standard Oboe";
-        if (octave <= 1) reedTxt = "Contrabassoon";
-        else if (octave <= 3) reedTxt = "Bassoon / English Horn";
-        else if (octave >= 6) reedTxt = "Piccolo Oboe";
-
-        let clarTxt = "Bb Soprano Clarinet";
-        if (octave <= 2) clarTxt = "Octocontralto / Contrabass Clarinet";
-        else if (octave == 3) clarTxt = "Bass / Alto Clarinet";
-        else if (octave >= 6) clarTxt = "Piccolo Clarinet in Bb";
-
-        let saxTxt = "Alto Saxophone";
-        if (octave <= 1) saxTxt = "Subcontrabass / Contrabass Sax";
-        else if (octave == 2) saxTxt = "Bass / Baritone Sax";
-        else if (octave == 3) saxTxt = "Tenor Sax";
-        else if (octave >= 6) saxTxt = "Soprano / Sopranino Sax";
-
-        let brassTxt = "Trumpet";
-        if (octave <= 2) brassTxt = "Tuba";
-        else if (octave == 3) brassTxt = "Trombone / French Horn";
-        else if (octave >= 6) brassTxt = "Piccolo Trumpet";
-
-        let stringTxt = "Violin";
-        if (octave <= 2) stringTxt = "Double Bass";
-        if (octave == 3) stringTxt = "Cello / Viola";
-
-        document.getElementById('source-flutes').innerText = "Acoustic Source: " + fluteTxt;
-        document.getElementById('source-doubleReeds').innerText = "Acoustic Source: " + reedTxt;
-        document.getElementById('source-clarinets').innerText = "Acoustic Source: " + clarTxt;
-        document.getElementById('source-saxophones').innerText = "Acoustic Source: " + saxTxt;
-        document.getElementById('source-brass').innerText = "Acoustic Source: " + brassTxt;
-        document.getElementById('source-strings').innerText = "Acoustic Source: " + stringTxt;
-
-        // Automatically shift pitch up/down real time if audio is active
-        if (currentPlayingType) {
-            let reclickType = currentPlayingType;
-            currentPlayingType = null; // force clear to trigger toggle refresh
-            toggleDrone(reclickType);
-        }
-    }
-
-    // --- METRONOME ENGINE ---
-    let bpm = 120;
-    let metronomeLoop = null;
-    let isPlaying = false;
-
-    // Use separate quick clicks for downbeats and weak beats
-    const clickHigh = new Tone.Oscillator("C6", "sine").toDestination();
-    const clickLow = new Tone.Oscillator("C5", "sine").toDestination();
-    clickHigh.volume.value = -6;
-    clickLow.volume.value = -12;
-
-    let beatCount = 0;
-
-    function handleBpmSlider(val) {
-        bpm = parseInt(val);
-        document.getElementById('bpmInput').value = bpm;
-        updateTempoTerm();
-        if (isPlaying) restartMetronome();
-    }
-
-    function handleBpmTyping() {
-        let val = document.getElementById('bpmInput').value;
-        if (val === "") return;
-        let num = parseInt(val);
-        if (!isNaN(num)) {
-            if (num > 350) num = 350;
-            bpm = num;
-            document.getElementById('bpmSlider').value = bpm;
-            updateTempoTerm();
-            if (isPlaying) restartMetronome();
-        }
-    }
-
-    function validateBpm() {
-        let val = parseInt(document.getElementById('bpmInput').value);
-        if (isNaN(val) || val < 20) bpm = 20;
-        document.getElementById('bpmInput').value = bpm;
-        document.getElementById('bpmSlider').value = bpm;
-        updateTempoTerm();
-    }
-
-    function adjustBpm(amount) {
-        bpm += amount;
-        if (bpm < 20) bpm = 20;
-        if (bpm > 350) bpm = 350;
-        document.getElementById('bpmInput').value = bpm;
-        document.getElementById('bpmSlider').value = bpm;
-        updateTempoTerm();
-        if (isPlaying) restartMetronome();
-    }
-
-    function updateTempoTerm() {
-        let term = "Moderato";
-        if (bpm < 40) term = "Larghissimo";
-        else if (bpm < 60) term = "Largo";
-        else if (bpm < 80) term = "Adagio";
-        else if (bpm < 100) term = "Andante";
-        else if (bpm < 112) term = "Moderato";
-        else if (bpm < 160) term = "Allegro";
-        else if (bpm < 200) term = "Presto";
-        else if (bpm < 240) term = "Prestissimo";
-        else if (bpm < 300) term = "Velocissimo";
-        else term = "Hyper-Tempo";
-        document.getElementById('tempoTerm').innerText = term;
-    }
-
-    function toggleMetronome() {
-        if (Tone.context.state !== 'running') Tone.start();
-        isPlaying = !isPlaying;
-        
-        if (isPlaying) {
-            document.getElementById('playBtn').innerText = "STOP CLICK";
-            document.getElementById('playBtn').style.background = "#ff4444";
-            startMetronomeLoop();
-        } else {
-            document.getElementById('playBtn').innerText = "START CLICK";
-            document.getElementById('playBtn').style.background = "#00ff88";
-            stopMetronomeLoop();
-        }
-    }
-
-    function startMetronomeLoop() {
-        beatCount = 0;
-        // Schedule audio loops calculations based on accurate musical values
-        metronomeLoop = Tone.Transport.scheduleRepeat((time) => {
-            if (beatCount % 4 === 0) {
-                clickHigh.start(time).stop(time + 0.03);
-            } else {
-                clickLow.start(time).stop(time + 0.03);
-            }
-            beatCount++;
-        }, "4n");
-        
-        Tone.Transport.bpm.value = bpm;
-        Tone.Transport.start();
-    }
-
-    function stopMetronomeLoop() {
-        Tone.Transport.stop();
-        if (metronomeLoop !== null) {
-            Tone.Transport.clear(metronomeLoop);
-            metronomeLoop = null;
-        }
-    }
-
-    function restartMetronome() {
-        stopMetronomeLoop();
-        startMetronomeLoop();
-    }
-</script>
-</body>
-</html>
+    <div id="panel-tuner" class="app-panel">
+        <div class="tuner-matrix">
+            <div class="tuner-input-group
