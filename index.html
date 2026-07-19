@@ -314,6 +314,7 @@
             border-radius: 12px;
             padding: 30px;
             margin-bottom: 25px;
+            text-align: center;
         }
 
         .hud-row {
@@ -330,11 +331,12 @@
         }
 
         .center-status-alert {
-            font-size: 2.2rem;
-            font-weight: 800;
+            font-size: 2.5rem;
+            font-weight: 900;
             color: var(--text-dim);
             margin: 20px 0;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
         .mic-engage-btn {
@@ -347,6 +349,7 @@
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
+            width: 100%;
         }
 
         .mic-engage-btn:hover {
@@ -440,8 +443,8 @@
         <div class="tuner-readout-hud">
             <div class="hud-row">Target Frequency Center: <span id="hzTarget">0.0 Hz</span></div>
             <div class="hud-row">Detected Core Signal: <span id="hzCurrent">0.0 Hz</span></div>
-            <div class="center-status-alert" id="tunerStatusText">READY TO SAMPLING</div>
-            <div style="font-family: monospace; font-size:1.2rem; color:var(--neon-cyan); font-weight:700;" id="centsLabel">Cents Offset: --</div>
+            <div class="center-status-alert" id="tunerStatusText">OFFLINE</div>
+            <div style="font-family: monospace; font-size:1.3rem; color:var(--neon-cyan); font-weight:700;" id="centsLabel">Cents Offset: --</div>
         </div>
 
         <button class="mic-engage-btn" onclick="initializeLiveTunerMic()">DEPLOY CHROMATIC ANALYZER</button>
@@ -501,14 +504,14 @@
                     </div>
                     <div class="rhythm-tile" id="sub-3" onclick="selectRhythmSubdivision(3)">
                         <svg width="46" height="35" viewBox="0 0 46 35">
-                            <text x="24" y="9" font-size="12" font-family="'SF Pro', sans-serif" font-weight="900" text-anchor="middle" fill="var(--neon-cyan)">3</text>
+                            <text x="24" y="10" font-size="14" font-family="sans-serif" font-weight="900" text-anchor="middle" fill="var(--neon-cyan)">3</text>
                             <ellipse cx="6" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
                             <ellipse cx="22" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
                             <ellipse cx="38" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
-                            <line x1="9.5" y1="28" x2="9.5" y2="13" />
-                            <line x1="25.5" y1="28" x2="25.5" y2="13" />
-                            <line x1="41.5" y1="28" x2="41.5" y2="13" />
-                            <line x1="9.5" y1="13" x2="41.5" y2="13" stroke-width="4" />
+                            <line x1="9.5" y1="28" x2="9.5" y2="14" />
+                            <line x1="25.5" y1="28" x2="25.5" y2="14" />
+                            <line x1="41.5" y1="28" x2="41.5" y2="14" />
+                            <line x1="9.5" y1="14" x2="41.5" y2="14" stroke-width="4" />
                         </svg>
                         <span class="tile-caption">Triplet</span>
                     </div>
@@ -528,13 +531,13 @@
                         <span class="tile-caption">16ths</span>
                     </div>
                     <div class="rhythm-tile" id="sub-5" onclick="selectRhythmSubdivision(5)">
-                        <svg width="42" height="35" viewBox="0 0 42 35">
-                            <text x="21" y="9" font-size="12" font-family="'SF Pro', sans-serif" font-weight="900" text-anchor="middle" fill="var(--neon-cyan)">3</text>
-                            <ellipse cx="7" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
-                            <ellipse cx="33" cy="28" rx="3.5" ry="2.5" fill="currentColor"/>
-                            <line x1="10.5" y1="28" x2="10.5" y2="13" />
-                            <line x1="36.5" y1="28" x2="36.5" y2="13" />
-                            <line x1="10.5" y1="13" x2="36.5" y2="13" stroke-width="4" />
+                        <svg width="46" height="35" viewBox="0 0 46 35">
+                            <text x="24" y="10" font-size="14" font-family="sans-serif" font-weight="900" text-anchor="middle" fill="var(--neon-cyan)">3</text>
+                            <ellipse cx="10" cy="28" rx="4.5" ry="3" fill="currentColor"/>
+                            <line x1="14.5" y1="28" x2="14.5" y2="13" stroke-width="2"/>
+                            <ellipse cx="32" cy="28" rx="4" ry="2.5" fill="currentColor"/>
+                            <line x1="36" y1="28" x2="36" y2="13" stroke-width="2"/>
+                            <path d="M 36,13 C 40,15 41,19 41,21" fill="none" stroke="currentColor" stroke-width="2"/>
                         </svg>
                         <span class="tile-caption">Swing</span>
                     </div>
@@ -601,13 +604,13 @@
         clearActiveDroneEngines();
     }
 
-    // --- METRONOME ENGINE ---
+    // --- ACCENT METRONOME FIXED ENGINE ---
     let bpm = 100;
     let isMetronomeRunning = false;
     let metronomeEvent = null;
     let beatsPerMeasure = 4;
     let currentSubdivisionMode = 1; 
-    let beatIdx = 0;
+    let stepCount = 0; // Tracks subdivision ticks internally
     let clickHigh, clickLow, clickSub;
     
     function globalAudioUnlock() {
@@ -615,9 +618,9 @@
             clickHigh = new Tone.Oscillator("E6", "sine").toDestination();
             clickLow = new Tone.Oscillator("B5", "sine").toDestination();
             clickSub = new Tone.Oscillator("G5", "sine").toDestination();
-            clickHigh.volume.value = -6;
-            clickLow.volume.value = -12;
-            clickSub.volume.value = -18;
+            clickHigh.volume.value = -4;
+            clickLow.volume.value = -10;
+            clickSub.volume.value = -16;
         }
         if (Tone.context.state !== 'running') {
             Tone.start();
@@ -668,6 +671,7 @@
         if (beatsPerMeasure < 1) beatsPerMeasure = 1;
         if (beatsPerMeasure > 12) beatsPerMeasure = 12;
         document.getElementById('beatsMeasureVal').innerText = beatsPerMeasure;
+        if (isMetronomeRunning) resetLoopInterval();
     }
 
     function selectRhythmSubdivision(mode) {
@@ -726,7 +730,7 @@
     }
 
     function deployTransportLoop() {
-        beatIdx = 0;
+        stepCount = 0; 
         let speedString = "4n";
         
         if (currentSubdivisionMode === 2) speedString = "8n";
@@ -735,31 +739,32 @@
 
         metronomeEvent = Tone.Transport.scheduleRepeat((time) => {
             let accentActive = document.getElementById('stressFirst').checked;
-            
-            if (currentSubdivisionMode === 5) {
-                let tripletPos = beatIdx % 3;
-                let isMeasureStart = (beatIdx === 0);
+            let totalTicksPerMeasure = beatsPerMeasure * (currentSubdivisionMode === 5 ? 3 : currentSubdivisionMode);
+            let currentTickInMeasure = stepCount % totalTicksPerMeasure;
 
+            if (currentSubdivisionMode === 5) {
+                // Swing Subdivision (Triplet Base)
+                let tripletPos = currentTickInMeasure % 3;
                 if (tripletPos === 0) {
-                    if (isMeasureStart && accentActive) clickHigh.start(time).stop(time + 0.04);
-                    else clickLow.start(time).stop(time + 0.04);
+                    if (currentTickInMeasure === 0 && accentActive) clickHigh.start(time).stop(time + 0.05);
+                    else clickLow.start(time).stop(time + 0.05);
                 } else if (tripletPos === 2) {
                     clickSub.start(time).stop(time + 0.02);
                 }
             } else {
-                let ticksCount = beatsPerMeasure * currentSubdivisionMode;
-                let isMeasureAccent = (beatIdx % ticksCount) === 0;
-                let isMainBeat = (beatIdx % currentSubdivisionMode) === 0;
+                // Standard straight subdivisions (1, 2, 4)
+                let isDownbeat = (currentTickInMeasure === 0);
+                let isMainQuarterBeat = (currentTickInMeasure % currentSubdivisionMode === 0);
 
-                if (isMeasureAccent && accentActive) {
-                    clickHigh.start(time).stop(time + 0.04);
-                } else if (isMainBeat) {
-                    clickLow.start(time).stop(time + 0.04);
+                if (isDownbeat && accentActive) {
+                    clickHigh.start(time).stop(time + 0.05);
+                } else if (isMainQuarterBeat) {
+                    clickLow.start(time).stop(time + 0.05);
                 } else {
                     clickSub.start(time).stop(time + 0.02);
                 }
             }
-            beatIdx++;
+            stepCount++;
         }, speedString);
 
         Tone.Transport.bpm.value = bpm;
@@ -812,8 +817,6 @@
     }
 
     function processOctaveLabelUpdate() {
-        let target = document.getElementById('octaveSelector').value;
-        // Dynamically shift names to show complex tracking script is operational
         if (firingDroneKey) {
             let preserved = firingDroneKey;
             firingDroneKey = null;
@@ -834,12 +837,11 @@
     let sourceNode = null;
     let analyserNode = null;
     let tunerSampleData = new Float32Array(2048);
-
     const pitchNotesArray = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
     function initializeLiveTunerMic() {
         globalAudioUnlock();
-        audioCtx = Tone.context.rawContext ? Tone.context.rawContext : new (window.AudioContext || window.webkitAudioContext)();
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         navigator.mediaDevices.getUserMedia({ audio: true, video: false })
             .then((stream) => {
@@ -849,13 +851,13 @@
                 analyserNode.fftSize = 2048;
                 sourceNode.connect(analyserNode);
                 
-                document.getElementById('tunerStatusText').innerText = "LISTENING...";
+                document.getElementById('tunerStatusText').innerText = "LISTENING";
                 document.getElementById('tunerStatusText').style.color = "var(--neon-cyan)";
                 executeTunerPipelineLoop();
             })
             .catch((err) => {
                 console.error(err);
-                document.getElementById('tunerStatusText').innerText = "MIC PERMISSION DENIED";
+                document.getElementById('tunerStatusText').innerText = "MIC ERROR";
                 document.getElementById('tunerStatusText').style.color = "var(--neon-red)";
             });
     }
@@ -866,31 +868,29 @@
         
         let pitchDetected = processAutocorrelation(tunerSampleData, audioCtx.sampleRate);
         
-        if (pitchDetected !== -1 && pitchDetected > 30 && pitchDetected < 2000) {
+        if (pitchDetected !== -1 && pitchDetected > 50 && pitchDetected < 1500) {
             document.getElementById('hzCurrent').innerText = pitchDetected.toFixed(1) + " Hz";
             
-            // Calculate note parameters
             let noteIdxValue = 12 * (Math.log2(pitchDetected / 440)) + 69;
             let standardRoundedIndex = Math.round(noteIdxValue);
-            
             let centsDifference = (noteIdxValue - standardRoundedIndex) * 100;
             
             let targetFrequencyCalculated = 440 * Math.pow(2, (standardRoundedIndex - 69) / 12);
             document.getElementById('hzTarget').innerText = targetFrequencyCalculated.toFixed(1) + " Hz";
 
-            let noteLabelString = pitchNotesArray[standardRoundedIndex % 12];
+            let noteLabelString = pitchNotesArray[(standardRoundedIndex % 12 + 12) % 12];
             let octaveLabelInteger = Math.floor(standardRoundedIndex / 12) - 1;
             let totalNoteNameCombined = noteLabelString + octaveLabelInteger;
 
-            // Display values inside the editable fields
+            // Display values inside the dual text boxes natively
             document.getElementById('tunerBoxWritten').value = totalNoteNameCombined;
             document.getElementById('tunerBoxConcert').value = totalNoteNameCombined;
 
-            // Generate Sharp / Flat / In Tune feedback thresholds
-            if (Math.abs(centsDifference) <= 3) {
+            // Update Sharp / Flat / In Tune thresholds cleanly
+            if (Math.abs(centsDifference) <= 4) {
                 document.getElementById('tunerStatusText').innerText = "IN TUNE";
                 document.getElementById('tunerStatusText').style.color = "var(--neon-green)";
-            } else if (centsDifference > 3) {
+            } else if (centsDifference > 4) {
                 document.getElementById('tunerStatusText').innerText = "SHARP";
                 document.getElementById('tunerStatusText').style.color = "var(--neon-red)";
             } else {
@@ -900,7 +900,6 @@
             
             document.getElementById('centsLabel').innerText = "Cents Offset: " + (centsDifference > 0 ? "+" : "") + centsDifference.toFixed(1);
         }
-        
         requestAnimationFrame(executeTunerPipelineLoop);
     }
 
@@ -910,18 +909,7 @@
         for (let i = 0; i < size; i++) {
             rsc += buffer[i] * buffer[i];
         }
-        if (Math.sqrt(rsc / size) < 0.01) return -1; // Root-mean-square threshold gate
-
-        let r1 = 0, r2 = size - 1;
-        let threshold = 0.2;
-        for (let i = 0; i < size / 2; i++) {
-            if (Math.abs(buffer[i]) < threshold) { r1 = i; break; }
-        }
-        for (let i = size - 1; i >= size / 2; i--) {
-            if (Math.abs(buffer[i]) < threshold) { r2 = i; break; }
-        }
-        buffer = buffer.slice(r1, r2);
-        size = buffer.length;
+        if (Math.sqrt(rsc / size) < 0.015) return -1; 
 
         let trackingCorrelations = new Float32Array(size);
         for (let i = 0; i < size; i++) {
